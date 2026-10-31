@@ -1,0 +1,121 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Hidden Arcade</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="A small arcade of browser games: ninja RPGs, brawlers, a zombie city, and a rolling-ball game.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reggae+One&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap">
+<style>
+/* layout: one column of "cabinet" rows; emblem tile left, info right; filter chips up top. Single dark theme by choice (arcade at night). */
+:root{
+  --night:#151829;
+  --panel:#1f2340;
+  --line:#343a66;
+  --text:#ece6d6;
+  --dim:#a7a3b8;
+  --vermilion:#ef5a3c;
+  --gold:#f2c14e;
+  --font-display:'Reggae One','Arial Black',system-ui,sans-serif;
+  --font-body:'Zen Kaku Gothic New',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--night);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin:0 auto;padding-block:28px 40px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:6px}
+.mark{display:flex;align-items:center;gap:12px}
+.seal{width:46px;height:46px;flex:none;border-radius:10px;background:var(--vermilion);color:var(--night);display:grid;place-items:center;font-family:var(--font-display);font-size:26px;transform:rotate(-4deg)}
+h1{font-family:var(--font-display);font-weight:400;font-size:clamp(34px,8vw,52px);line-height:1;margin:0;letter-spacing:.01em}
+header p{margin:0;color:var(--dim);max-width:60ch}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:inherit;font-weight:700;font-size:13px;color:var(--text);background:transparent;border:2px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--night)}
+.chip:focus-visible,.game:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.count{font-size:13px;color:var(--dim);align-self:center;margin-left:auto;font-variant-numeric:tabular-nums}
+.list{display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
+.game{display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:start;padding:14px;border:2px solid var(--line);border-radius:14px;background:var(--panel);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+.game:hover{border-color:var(--gold);transform:translateY(-2px)}
+.emblem{width:76px;height:76px;border-radius:12px;display:grid;place-items:center;font-family:var(--font-display);font-size:38px;color:var(--night);background:var(--c,var(--gold))}
+.info{min-width:0;display:flex;flex-direction:column;gap:4px}
+.top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.info h2{font-family:var(--font-display);font-weight:400;font-size:21px;line-height:1.15;margin:0}
+.genre{font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.info p{margin:0;color:var(--dim);font-size:14px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;border:1px solid var(--line);color:var(--text)}
+.tag.phone{background:var(--vermilion);border-color:var(--vermilion);color:var(--night)}
+.tag.new{background:var(--gold);border-color:var(--gold);color:var(--night)}
+footer{border-top:2px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:8px;color:var(--dim);font-size:13px}
+footer a{color:var(--text)}
+@media (max-width:420px){.game{grid-template-columns:56px 1fr;gap:12px}.emblem{width:56px;height:56px;font-size:28px}}
+@media (prefers-reduced-motion:reduce){.game{transition:none}.game:hover{transform:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mark"><div class="seal" aria-hidden="true">隠</div><h1>Hidden Arcade</h1></div>
+    <p>Browser games. Tap one and play. No installs and no accounts.</p>
+  </header>
+
+  <div class="chips" role="group" aria-label="Filter games">
+    <button class="chip" id="fAll" type="button" aria-pressed="true">All games</button>
+    <button class="chip" id="fPhone" type="button" aria-pressed="false">Plays on phone</button>
+    <span class="count" id="count"></span>
+  </div>
+
+  <ul class="list" id="list"></ul>
+
+  <footer>
+    <p>Online multiplayer is turned off here. Solo and same-device play work.</p>
+    <p>Unofficial fan projects, made for fun. Not affiliated with or endorsed by the owners of any franchise referenced.</p>
+    <p>3D model credits: <a href="games/ninja-reborn/assets/nr_chars/CREDITS.md">characters</a> · <a href="games/ninja-reborn/assets/props/CREDITS.md">props</a> (CC BY 4.0).</p>
+  </footer>
+</div>
+
+<script>
+const GAMES=[
+ {slug:'rolling-leaf',name:'Rolling Leaf',kanji:'転',c:'#ef8a3c',genre:'Rolling',players:'1P',phone:true,isNew:true,
+  text:'Start the size of a kunai and roll up the whole village. Two levels: Leaf Village and Hidden Sand.'},
+ {slug:'ninja-reborn',name:'Ninja Reborn',kanji:'忍',c:'#f2c14e',genre:'Tactics RPG',players:'1P',phone:true,note:'Turn phone sideways',
+  text:'Turn-based 3D ninja battles. Shinobi Path story, Chunin Exams, and Free Roam.'},
+ {slug:'ninjas-and-tailed-beasts',name:'Ninjas and Tailed Beasts',kanji:'獣',c:'#e0705a',genre:'Tabletop RPG',players:'1P',phone:true,note:'Turn phone sideways',
+  text:'Ninja Reborn with d20 rules. Pick a clan and level from 1 to 20.'},
+ {slug:'dead-city',name:'Dead City',kanji:'屍',c:'#8fd16a',genre:'Action',players:'1P',phone:true,note:'Needs a recent browser',
+  text:'Superheroes against a zombie outbreak across Manhattan.'},
+ {slug:'spell-jutsu-duel',name:'Spell Jutsu Duel',kanji:'術',c:'#7cc4ef',genre:'Word duel',players:'1–2P',phone:true,
+  text:'Hear the word, spell it right, cast the jutsu. Two players take turns on one device.'},
+ {slug:'ninja-world',name:'Ninja World',kanji:'里',c:'#9bd27a',genre:'Open-world RPG',players:'1–3P',phone:false,note:'Keyboard or controller',
+  text:'Explore a ninja village. Take missions, craft gear, and level up.'},
+ {slug:'mossgrave-descent',name:'Mossgrave Descent',kanji:'窟',c:'#b49ae8',genre:'Dungeon crawler',players:'1P',phone:false,note:'Keyboard or controller',
+  text:'Fight down through the floors of a living dungeon with Mitchall as your guide.'},
+ {slug:'bridge-of-mist',name:'Bridge of Mist',kanji:'霧',c:'#c9d3e6',genre:'Brawler',players:'1–3P',phone:false,note:'Keyboard or controller',
+  text:'Hold the bridge against a hunter ninja. Up to three players on one screen.'},
+ {slug:'smash-3d',name:'Smash 3D',kanji:'撃',c:'#ef5a3c',genre:'Platform fighter',players:'1–4P',phone:false,note:'Keyboard or controller',
+  text:'Knock fighters off the stage. Computer fighters fill any empty slots.'},
+ {slug:'night-street',name:'Night Street',kanji:'夜',c:'#6f86e8',genre:'Combat demo',players:'1P',phone:false,note:'Keyboard or controller',
+  text:'One street, one night. A short combat test level.'},
+ {slug:'sand-village',name:'Sand Village',kanji:'砂',c:'#e6c070',genre:'Open-world demo',players:'1P',phone:false,note:'Controller only',
+  text:'Run around a desert village. An early open-world prototype.'}
+];
+const list=document.getElementById('list'),count=document.getElementById('count');
+const esc=s=>s.replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+function render(phoneOnly){
+  const shown=GAMES.filter(g=>!phoneOnly||g.phone);
+  list.innerHTML=shown.map(g=>`<li><a class="game" href="games/${g.slug}/index.html">
+    <div class="emblem" style="--c:${g.c}" aria-hidden="true">${g.kanji}</div>
+    <div class="info"><div class="top"><h2>${esc(g.name)}</h2><span class="genre">${esc(g.genre)}</span></div>
+    <p>${esc(g.text)}</p>
+    <div class="tags">${g.isNew?'<span class="tag new">New</span>':''}${g.phone?'<span class="tag phone">Phone</span>':''}<span class="tag">${g.players}</span>${g.note?`<span class="tag">${esc(g.note)}</span>`:''}</div></div></a></li>`).join('');
+  count.textContent=shown.length+' games';
+}
+const fAll=document.getElementById('fAll'),fPhone=document.getElementById('fPhone');
+function set(phone){fAll.setAttribute('aria-pressed',!phone);fPhone.setAttribute('aria-pressed',phone);render(phone);try{localStorage.setItem('ha-phone',phone?'1':'')}catch(e){}}
+fAll.onclick=()=>set(false);fPhone.onclick=()=>set(true);
+let start=false;try{start=localStorage.getItem('ha-phone')==='1'}catch(e){}
+set(start||matchMedia('(pointer:coarse)').matches&&innerWidth<600);
+</script>
+
+</body></html>

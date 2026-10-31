@@ -1,0 +1,821 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Open World: Sand Village</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#2a2119;color:#f3ecdf;font-family:ui-monospace,Menlo,Consolas,monospace;-webkit-user-select:none;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud{position:fixed;pointer-events:none;z-index:2}
+#tl{top:calc(12px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));width:min(300px,55vw)}
+.lbl{font-size:11px;letter-spacing:.06em;opacity:.85;display:flex;justify-content:space-between}
+.bar{height:12px;background:rgba(0,0,0,.55);border:2px solid #000;margin:2px 0 6px}
+.bar>i{display:block;height:100%;width:100%;transition:width .08s linear}
+#hpb>i{background:#4fb45a}
+#chb>i{background:#3c8cf0}
+#stb{height:6px}
+#stb>i{background:#f2c94c}
+#tr{top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));text-align:right;font-size:12px;background:rgba(0,0,0,.45);padding:6px 10px;border:2px solid #000}
+#bl{bottom:calc(12px + env(safe-area-inset-bottom,0px));left:calc(12px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.cap{display:flex;gap:4px;background:rgba(0,0,0,.5);border:2px solid #000;padding:6px 8px;font-size:12px}
+.dot{width:14px;height:20px;border-radius:7px;background:#4fb45a;border:2px solid #000}
+.dot.off{background:#2a2a2a}
+#br{bottom:calc(12px + env(safe-area-inset-bottom,0px));right:calc(12px + env(safe-area-inset-right,0px));display:flex;gap:8px}
+.slot{position:relative;width:104px;background:rgba(0,0,0,.6);border:2px solid #000;padding:6px 8px;font-size:12px;overflow:hidden}
+.slot b{display:block;font-size:14px}
+.slot .k{position:absolute;top:4px;right:6px;font-size:10px;background:#f3ecdf;color:#111;padding:0 4px}
+.slot .cd{position:absolute;left:0;bottom:0;height:100%;width:0;background:rgba(0,0,0,.6)}
+.slot .cost{opacity:.8;font-size:11px}
+#legend{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);font-size:11px;opacity:.85;background:rgba(0,0,0,.45);padding:4px 8px;white-space:nowrap;transition:opacity 1s}
+#noPad{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:rgba(20,15,10,.86);font-size:18px;text-align:center;padding:20px}
+.pop{position:fixed;z-index:3;pointer-events:none;font-weight:900;font-size:16px;text-shadow:0 2px 0 #000;transform:translate(-50%,-50%);white-space:nowrap}
+
+#wheel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:340px;height:340px;z-index:4;pointer-events:none;display:none}
+#wheel .ring{position:absolute;inset:60px;border-radius:50%;border:2px dashed rgba(243,236,223,.35);background:rgba(10,8,6,.35)}
+#wheel .ctr{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;letter-spacing:.08em;opacity:.8;text-align:center}
+.wj{position:absolute;width:118px;background:rgba(0,0,0,.72);border:2px solid #000;padding:6px 8px;font-size:12px;text-align:center}
+.wj b{display:block;font-size:14px;margin-top:2px}
+.wj .k{display:inline-block;font-size:11px;background:#f3ecdf;color:#111;padding:0 5px}
+.wj .c{opacity:.8;font-size:11px}
+#w-y{left:111px;top:0}
+#w-a{left:111px;bottom:0}
+#w-x{left:0;top:111px}
+#w-b{right:0;top:111px}
+.wj.dim{opacity:.45}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="tl">
+  <div class="lbl"><span id="who">LEAF GENIN</span><span id="lvl">Lv 3</span></div>
+  <div class="bar" id="hpb"><i></i></div>
+  <div class="lbl"><span>CHAKRA</span><span id="chTxt"></span></div>
+  <div class="bar" id="chb"><i></i></div>
+  <div class="bar" id="stb"><i></i></div>
+  <div class="lbl" style="opacity:.6"><span>STAMINA</span><span id="stTxt"></span></div>
+</div>
+
+<div class="hud" id="tr"><div id="money">218 ryo</div><div id="xp" style="opacity:.8">XP 477</div></div>
+
+<div class="hud" id="bl">
+  <div class="cap"><span style="margin-right:6px">CAPSULE</span><span id="caps" style="display:flex;gap:4px"></span></div>
+  <div class="cap"><span style="margin-right:6px">KUNAI</span><span id="kun"></span></div>
+</div>
+
+<div class="hud" id="br">
+  <div class="slot" id="s-y"><span class="k">RT+Y</span><b id="n-y"></b><span class="cost" id="c-y"></span><div class="cd" id="cd-y"></div></div>
+  <div class="slot" id="s-a"><span class="k">RT+A</span><b id="n-a"></b><span class="cost" id="c-a"></span><div class="cd" id="cd-a"></div></div>
+  <div class="slot" id="s-x"><span class="k">RT+X</span><b id="n-x"></b><span class="cost" id="c-x"></span><div class="cd" id="cd-x"></div></div>
+  <div class="slot" id="s-b"><span class="k">RT+B</span><b id="n-b"></b><span class="cost" id="c-b"></span><div class="cd" id="cd-b"></div></div>
+</div>
+
+<div id="legend">Left stick walk · L3 sprint · A jump · B dodge · X light · Y heavy · LT block · RB tap kunai, hold RB to aim · hold RT + Y/A/X/B jutsu · LB capsule · Right stick camera</div>
+
+<div id="noPad">Connect a controller and press any button to start.</div>
+
+<div id="wheel">
+  <div class="ring"></div>
+  <div class="ctr">HOLD RT<br>JUTSU</div>
+  <div class="wj" id="w-y"><span class="k">Y</span><b id="wn-y"></b><span class="c" id="wc-y"></span></div>
+  <div class="wj" id="w-a"><span class="k">A</span><b id="wn-a"></b><span class="c" id="wc-a"></span></div>
+  <div class="wj" id="w-x"><span class="k">X</span><b id="wn-x"></b><span class="c" id="wc-x"></span></div>
+  <div class="wj" id="w-b"><span class="k">B</span><b id="wn-b"></b><span class="c" id="wc-b"></span></div>
+</div>
+<div id="pick" style="position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(10,8,6,.82)">
+  <div style="font-size:14px;letter-spacing:.08em">CHOOSE YOUR NINJA</div>
+  <div style="display:flex;gap:24px">
+    <div id="pk-naruto" style="width:200px;padding:16px;background:rgba(0,0,0,.6);border:2px solid #000"><b style="font-size:18px">NARUTO</b><div style="font-size:12px;opacity:.8;margin-top:6px">Rasengan, Shadow Clone Rush, Wind Burst</div></div>
+    <div id="pk-sasuke" style="width:200px;padding:16px;background:rgba(0,0,0,.6);border:2px solid #000"><b style="font-size:18px">SASUKE</b><div style="font-size:12px;opacity:.8;margin-top:6px">Fireball, Chidori, Sharingan Shield, Lightning Burst</div></div>
+  </div>
+  <div style="font-size:12px;opacity:.7">D-pad left / right to choose · A to start</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============ TUNING: change these numbers to change how the game feels ============ */
+const TUNE = {
+  walk: 4.2,            // walking speed (units per second)
+  sprint: 7.6,          // sprinting speed
+  accel: 12,            // how quickly speed changes (higher = snappier)
+  jumpV: 9.5,           // jump launch speed
+  gravity: 26,          // pull back down
+  stamMax: 100,         // stamina pool
+  stamDrain: 22,        // stamina used per second while sprinting
+  stamRegen: 18,        // stamina recovered per second
+  stamDelay: 0.8,       // seconds before stamina starts to come back after you use it
+  sprintMin: 8,         // need at least this much stamina to start sprinting
+  jumpStam: 12,         // stamina cost of a jump
+  lightStam: 8,         // stamina cost of a light attack (X)
+  heavyStam: 18,        // stamina cost of a heavy attack (Y)
+  blockStam: 10,        // stamina lost each time a block takes a hit
+  blockMove: 0.5,       // walking speed while blocking (0.5 = half speed)
+  dodgeStam: 18,        // stamina cost of a dodge
+  chakraMax: 100,       // chakra pool
+  chakraRegen: 6,       // chakra recovered per second (the same rate as the Smash mode)
+  hpMax: 100,
+  capsuleHeal: 40,
+  capsuleMax: 3,
+  lightDmg: 8,          // light attack: quick, small
+  lightRange: 1.6,
+  lightCd: 0.35,
+  heavyDmg: 20,         // heavy attack: slow wind-up, big knockback
+  heavyRange: 1.9,
+  heavyWindup: 0.4,     // seconds before the heavy lands
+  heavyCd: 0.9,
+  dodgeSpeed: 10,
+  dodgeTime: 0.35,
+  dodgeCd: 0.6,
+  camDist: 9,           // how far the camera sits behind you
+  camSens: 2.6,         // right stick speed
+  camRecenter: 1.2,     // seconds of no camera input before it swings behind you
+  deadzone: 0.15,
+  kunaiMax: 10,         // kunai you can carry
+  kunaiSpeed: 16,       // flight speed
+  kunaiGravity: 14,     // how fast the arc drops
+  kunaiDmg: 6,
+  kunaiPickup: 0.9,     // how close you must walk to pick one of yours back up
+  kunaiLobTap: 3.5,     // upward speed on a quick tap (a shallow throw)
+  kunaiLobHold: 5.5,    // upward speed when aiming (a higher arc you can read)
+  aimHold: 0.2,         // holding RB this long (seconds) switches from tap to aim
+  dummyHit: 6,          // damage a training dummy does back when you're close
+  dummyCd: 2.6
+};
+
+/* ============ JUTSU on the three slots ============ */
+/* the two test ninja: each has four jutsu on RT + Y / A / X / B. Types: proj (a thrown jutsu), dash (a rush), shield, burst (around him) */
+let JSETS = {
+  naruto: {
+    y:{name:'Rasengan', type:'dash', chakra:20, cd:2.2, dmg:20, speed:14, dur:0.35, color:'#9fd8ff'},
+    a:{name:'Wind Blade', type:'proj', chakra:15, cd:0.9, dmg:12, speed:21, life:1.0, color:'#eafaff', size:[0.15,0.15,1.1]},
+    x:{name:'Shadow Clone Rush', type:'dash', chakra:20, cd:3, dmg:6, speed:12, dur:0.4, color:'#ffffff'},
+    b:{name:'Wind Burst', type:'burst', chakra:15, cd:3, dmg:14, radius:2.6}
+  },
+  sasuke: {
+    y:{name:'Fireball', type:'proj', chakra:12, cd:1.2, dmg:22, speed:10, life:1.6, color:'#ff8a2a', size:[0.9,0.9,0.9]},
+    a:{name:'Chidori', type:'dash', chakra:20, cd:2.6, dmg:22, speed:15, dur:0.3, color:'#bfe6ff'},
+    x:{name:'Sharingan Shield', type:'shield', chakra:25, cd:6, dur:2.5},
+    b:{name:'Lightning Burst', type:'burst', chakra:15, cd:3, dmg:16, radius:2.8}
+  }
+};
+let JUTSU = JSETS.naruto;
+const CHAR_COLORS = {
+  leaf:   ['#3a7d44', '#2a2320', '#f0cfae', '#2e3352'],
+  naruto: ['#e8742a', '#f2c94c', '#f0cfae', '#2e3352'],
+  sasuke: ['#2a3150', '#1c2233', '#f1d6bd', '#d8d4ca']
+};
+let chosenChar = null;
+
+/* ============ THE MAP: the Sand village, from the Legacy 3D Mockups file ============ */
+const SANDMAP=["                         ^^^^^^^^^^^^^^^                        ", "                      ^^^^^^^^^^^^^^^^^^^^^                     ", "                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^                  ", "                 ^^^^^^^^ccc^^^^c^cc^c^^^^^^^^^^                ", "                ^^^^^^ccc...............^^^^^^^^^               ", "              ^^^^^^^^.....................c^^^^^^^             ", "             ^^^^^cc....QQQ.LLLLLLLLL........c^^^^^^            ", "            ^^^^^c...xx.QQ*.LLLLLLLLLhh########^^^^^^           ", "           ^^^^^c....xx.....LLLLLLLLLhh#gggggg#.c^^^^^          ", "          ^^^^^c..222222hh..LLLLLLLLL..#gggggg#..c^^^^^         ", "         ^^^^c....222222hh..LLLL*LLLL..#gggggg#....c^^^^        ", "        ^^^^c...hh222222....hh.===.hh..#gggggg#hh...c^^^^       ", "       ^^^^c...=hh222222hh..hh.sss.hh..#gggggg#hh=...^^^^^      ", "       ^^^^c..===.222222hh.===========.#*######.===..c^^^^      ", "      ^^^^^....===222222=================.hh...===....c^^^^     ", "     ^^^^c......===....====,,,,===hh,,====hh..===.hh...^^^^^    ", "     ^^^c.....hh.===.====,,,,hh===hh,,,,====.===..hh....c^^^    ", "    ^^^^c.PPP.hh..=s===,,hh,,hh===,EEEE,,,===s=.........^^^^^   ", "    ^^^c..PP*......===,,,hh,,,,===,EEEE,,,,===...hh......c^^^   ", "    ^^^c....hh.hh.=====,,,,,,bb===,EEEEhh,=====..hh......c^^^   ", "   ^^^^.....hh.hh.==,===,,hh,bb===,EEEEhh===,==.....xx....c^^^  ", "   ^^^^.hh.......==,,,===,hh,,,===,,,,,,===,,,==....xx....^^^^  ", "   ^^^c.hh....hh===,,,,===,,ooooooooo,,===,,,,===hh.......c^^^  ", "  ^^^c........hh==,,,,,,===ooooooooooo===,,,xx,==hh..hh.hh.^^^^ ", "  ^^^^.hh..hh...==,hh,,,,=ooooooooooooo=,,,,xx,==....hh.hh.c^^^ ", "  ^^^^.hh..hh..==,,hh,hh,ooooooo*ooooooo,bb,,,,,==hh######.^^^^ ", "  ^^^^AAAAAA...==,,,,,hhooooooKKKKKoooooobb,,,,,==hh#mmmm#.c^^^ ", "  ^^^^AAAAAAhh.==,,hh,,,oooooKKKKKKKooooo,,,bb,,==..#mmmm#.c^^^ ", "  ^^^^AAAAAAhh.==,,hh,,,ooooKKKKKKKKKoooo,,,bb,,==..#mmmm#.c^^^ ", "  ^^^^AAAAAA==s=========ooooKKKKKKKKKoooo=========s=#mmmm#.c^^^ ", " ^^^^^AAAAA*==s=========ooo*KKKKKKKKK*ooo=========s=*mmmm#.c^^^^", "  ^^^^AAAAAA==s=========ooooKKKKKKKKKoooo=========s=#mmmm#.^^^^ ", "  ^^^^AAAAAA.hh==hh,,,,,ooooKKKKKKKKKoooo,,hh,,,==..#mmmm#.^^^^ ", "  ^^^^AAAAAA.hh==hh,,,,,oooooKKKKKKKooooo,,hh,,,==..#mmmm#.c^^^ ", "  ^^^^AAAAAA...==,,,,,hhooooooKKKKKoooooo,,,,,,,==hh#mmmm#.^^^^ ", "  ^^^^.....xx..==,hh,,hh,ooooooo*ooooooo,bb,hh,,==hh######.^^^^ ", "  ^^^c.hh..xx...==hh,,,,,=ooooo~~~ooooo=,bb,hh,==..........c^^^ ", "  ^^^c.hh_______==,,,,,,===oooo~~~oooo===,,,,,,==.hh.hh....c^^^ ", "   ^^^c..______*===,hh,===,,ooo~~~ooo,,===,hh,===.hh.hh...^^^^  ", "   ^^^c.._1__1__.==,hh===,,,,,,===,,,hh,===hh,==HHHHHH....^^^^  ", "   ^^^c.._______..==,===,,,hh,,===bb,hh,,===,==.*HHHHHhh..c^^^  ", "    ^^^^._______bb=====,,,,hh,,===bb,,,,hh=====.HHHHHHhh.c^^^   ", "    ^^^^._1__1__bb.===,hh,,,kk,===,kk,,,hh,===..HHHHHH...^^^^   ", "    ^^^^c_______..=s===hh,xxkk,===,kkbb,,,===s=.HHHHHH..^^^^^   ", "     ^^^c........===.====,xx,hh===hh,bb,====.===HHHHHH..^^^^    ", "     ^^^^^..hh..===hh..====,,hh===hh,,====.*C.===......c^^^^    ", "      ^^^^c.hh.===.hh...=================..CC..===....c^^^^     ", "       ^^^^c..===..........===========..........===..c^^^^      ", "       ^^^^^...=....hhTTT*T.BB.sss.BB........hh..=...^^^^^      ", "        ^^^^^....hh.hhTTTTT.BB.===.BB.R*RRhh.hh.....^^^^^       ", "         ^^^^^...hh...TTTTT....===....RRRRhh.......c^^^^        ", "          ^^^^cc......TTTTT.BB.===.BB.RRRR...bb..cc^^^^         ", "           ^^^^^c...hh......BB.===.BB........bb.^^^^^^          ", "            ^^^^^^..hh......hh.===.......hh....c^^^^^           ", "             ^^^^^c^.....hh.hh.===....hh.hh..^^^^^^^            ", "              ^^^^^^^^...hh.WW.===.WW.hh...^^^^^^^^             ", "                ^^^^^^^cc...WW.===.WW...cc^^^^^^^               ", "                 ^^^^^^^^^c^^^c:::^^^^c^^^^^^^^^                ", "                   ^^^^^^^^^^^^:::^^^^^^^^^^^^                  ", "                      ^^^^^^^^^:::^^^^^^^^^                     ", "                         ^^^^^^:::^^^^^^                        ", "                               :::                              ", "                               :::                              ", "                               GGG                              "];
+
+const NZ = SANDMAP.length, NX = SANDMAP[0].length;
+const CX = 32, CZ = 30;
+const CLIFF = new Set(['^','c',' ']);
+const SOLID = new Set(['^','c',' ','h','x','b','B','k','L','Q','g','m','H','C','T','R','A','E','2','P','W','#']);
+const GROUND_COL = {'.':'#c9a26b',',':'#c39b63','=':'#a37b4c','s':'#ab8453','o':'#d8c096','*':'#d9b25e',':':'#b8905d','G':'#b8905d','_':'#c4a272','1':'#c4a272','~':'#c8b18a','K':'#d0b58a','W':'#c9a26b'};
+const BLDG_COL = {'L':'#b98a5a','Q':'#a77c52','H':'#c39a6a','C':'#9c7550','T':'#b58b5f','R':'#a97a4f','A':'#d3ab7b','E':'#8e6a48','P':'#c08d60','W':'#b38053','B':'#9e7048','h':'#cfae84','x':'#b9946a','b':'#a57f58','k':'#8c6842','2':'#c9a277','m':'#7f5e3e','g':'#b38c60','#':'#e0c9a0'};
+const hsh = (a,b) => { const s = Math.sin(a*127.1 + b*311.7) * 43758.5453; return s - Math.floor(s); };
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const wrap = a => { while (a > Math.PI) a -= 2*Math.PI; while (a < -Math.PI) a += 2*Math.PI; return a; };
+
+function cellAt(x, z) {
+  const i = Math.round(x), j = Math.round(z);
+  if (j < 0 || j >= NZ || i < 0 || i >= NX) return ' ';
+  return SANDMAP[j][i] || ' ';
+}
+const solidAt = (x, z) => SOLID.has(cellAt(x, z));
+const blockedAt = (x, z) => {
+  const r = 0.3;
+  if ([[-r,-r],[r,-r],[-r,r],[r,r]].some(([a,b]) => solidAt(x+a, z+b))) return true;
+  return dummies.some(d => d.alive && Math.hypot(x - d.x, z - d.z) < 0.55);
+};
+
+/* ============ three.js setup ============ */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setSize(innerWidth, innerHeight);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#e6d2a2');
+scene.fog = new THREE.Fog(0xe6d2a2, 45, 130);
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+});
+
+scene.add(new THREE.HemisphereLight(0xfff1d6, 0x8a6a46, 0.9));
+const sun = new THREE.DirectionalLight(0xfff0d0, 1.05);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, {left:-22, right:22, top:22, bottom:-22, near:1, far:80});
+scene.add(sun); scene.add(sun.target);
+
+// the desert beyond the village
+const desert = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.MeshLambertMaterial({color:'#c9a46f'}));
+desert.rotation.x = -Math.PI / 2; desert.position.y = -0.52; desert.receiveShadow = true;
+scene.add(desert);
+
+// ground, cliffs and buildings: one instanced box per map cell
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+const groundCells = [], cliffCells = [], bldCells = [];
+for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
+  const c = SANDMAP[j][i] || ' ';
+  if (c === ' ') continue;
+  if (CLIFF.has(c)) cliffCells.push([i, j]);
+  else if (SOLID.has(c)) bldCells.push([i, j, c]);
+  else groundCells.push([i, j, c]);
+}
+const dm = new THREE.Object3D(), col = new THREE.Color();
+function instanceBlock(cells, heightOf, colorOf, y0) {
+  const mesh = new THREE.InstancedMesh(BOX, new THREE.MeshLambertMaterial({color:0xffffff}), cells.length);
+  cells.forEach((cell, n) => {
+    const [i, j] = cell, h = heightOf(cell);
+    dm.position.set(i, y0 + h / 2, j); dm.scale.set(1, h, 1); dm.updateMatrix();
+    mesh.setMatrixAt(n, dm.matrix);
+    col.set(colorOf(cell)); col.multiplyScalar(0.95 + hsh(i, j) * 0.09);
+    mesh.setColorAt(n, col);
+  });
+  mesh.instanceColor.needsUpdate = true;
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  scene.add(mesh);
+  return mesh;
+}
+instanceBlock(groundCells, () => 0.5, ([i,j,c]) => GROUND_COL[c] || '#c9a26b', -0.5);
+instanceBlock(cliffCells, () => 3, () => '#c9a46f', 0);
+instanceBlock(bldCells, ([i,j,c]) => (c==='h'||c==='x'||c==='b'||c==='k') ? 1.4 : 2.6 + hsh(i, j) * 1.6, ([i,j,c]) => BLDG_COL[c] || '#b38c60', 0);
+
+/* ============ the ninja (the same simple build as the rest of the game) ============ */
+function mat(c) { return new THREE.MeshLambertMaterial({color:c}); }
+function makeNinja(bodyCol, hairCol, skinCol, pantsCol) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), mat(bodyCol)); body.position.y = 1.15;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), mat(skinCol)); head.position.y = 1.7;
+  const hair = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.18, 0.44), mat(hairCol)); hair.position.set(0, 1.85, 0);
+  g.add(body, head, hair);
+  // the Leaf headband: a blue band with a metal plate on the forehead
+  const band = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.07, 0.46), mat('#2e3352')); band.position.set(0, 1.84, 0);
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.03), mat('#9aa4b0')); plate.position.set(0, 1.86, 0.24);
+  g.add(band, plate);
+  const pivot = (x, y, color, w, h) => {
+    const p = new THREE.Group(); p.position.set(x, y, 0);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat(color)); m.position.y = -h / 2;
+    p.add(m); g.add(p); return p;
+  };
+  const legL = pivot(-0.14, 0.85, pantsCol || '#2e3352', 0.2, 0.7), legR = pivot(0.14, 0.85, pantsCol || '#2e3352', 0.2, 0.7);
+  const armL = pivot(-0.34, 1.42, bodyCol, 0.16, 0.55), armR = pivot(0.34, 1.42, bodyCol, 0.16, 0.55);
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  return {g, legL, legR, armL, armR};
+}
+let ninja = makeNinja(...CHAR_COLORS.leaf);
+scene.add(ninja.g);
+
+/* ============ training dummies ============ */
+function makeDummy() {
+  const g = new THREE.Group();
+  const wood = mat('#8a6440');
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.8), wood); base.position.y = 0.05;
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.0, 0.18), wood); pole.position.y = 1.0;
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.16, 0.16), wood); bar.position.y = 1.5;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10), mat('#c8b08a')); head.position.y = 2.25;
+  g.add(base, pole, bar, head);
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  scene.add(g);
+  return g;
+}
+
+/* ============ spawn point: the nearest open cell to the middle of the village ============ */
+function openCell(x, z) { return !solidAt(x, z) && !blockedAt(x, z); }
+let spawn = {x: CX, z: CZ};
+outer: for (let r = 0; r < 25; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+  if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+  if (SANDMAP[CZ+dz] && (SANDMAP[CZ+dz][CX+dx] === '.' || SANDMAP[CZ+dz][CX+dx] === ',') && !solidAt(CX+dx, CZ+dz)) { spawn = {x: CX+dx, z: CZ+dz}; break outer; }
+}
+
+const dummies = [];
+for (const [dx, dz] of [[-5,-3],[5,-2],[0,6]]) {
+  const x = spawn.x + dx, z = spawn.z + dz;
+  dummies.push({x, z, alive:true, hp:60, max:60, respawn:0, kx:0, kz:0, flash:0, cd:0, home:{x,z}, mesh:makeDummy()});
+  dummies[dummies.length-1].mesh.position.set(x, 0, z);
+}
+
+/* ============ the player ============ */
+const P = {
+  x: spawn.x, z: spawn.z, y: 0, vy: 0, face: 0,
+  hp: TUNE.hpMax, chakra: TUNE.chakraMax, stam: TUNE.stamMax, staminaT: 0, vxS: 0, vzS: 0,
+  capsules: TUNE.capsuleMax, kunai: TUNE.kunaiMax, rbWas: false, rbT: 0, aiming: false, aimAng: 0,
+  strikeCd: 0, strikeT: 0, strikeKind: 'light',
+  heavyT: 0, heavyCd: 0, blocking: false,
+  dodgeT: 0, dodgeCd: 0, dodgeDx: 0, dodgeDz: 0,
+  shieldT: 0, cd: {y:0, a:0, x:0, b:0}, walk: 0, castT: 0, shake: 0, dashT: 0, dashSp: 0, dashDx: 0, dashDz: 0, dashDmg: 0, dashHit: new Set()
+};
+const cam = {yaw: 0, elev: 0.45, idle: 0};
+
+/* ============ visuals: projectiles, sand puffs, floating numbers, shield ============ */
+const projs = [], parts = [], pops = [], kunai = [];
+const shield = new THREE.Mesh(new THREE.SphereGeometry(1.1, 18, 12), new THREE.MeshBasicMaterial({color:'#e9d9a0', transparent:true, opacity:0.35, depthWrite:false}));
+shield.visible = false; scene.add(shield);
+
+function spawnPop(text, x, y, z, color) {
+  const el = document.createElement('div');
+  el.className = 'pop'; el.textContent = text; el.style.color = color || '#fff3c4';
+  document.body.appendChild(el);
+  pops.push({el, x, y, z, t: 0});
+}
+function spawnDust(x, z, n) {
+  for (let q = 0; q < n; q++) {
+    const m = new THREE.Mesh(BOX, mat('#d9b98a'));
+    m.scale.setScalar(0.18 + Math.random() * 0.12);
+    m.position.set(x + (Math.random()-0.5)*0.6, 0.1, z + (Math.random()-0.5)*0.6);
+    scene.add(m);
+    parts.push({m, vx:(Math.random()-0.5)*3, vy:1.5+Math.random()*2, vz:(Math.random()-0.5)*3, life:0.7});
+  }
+}
+function spawnProjectile(kind, dx, dz) {
+  const d = JUTSU[kind];
+  const sz = d.size || [0.15, 0.15, 1.1];
+  const m = new THREE.Mesh(new THREE.BoxGeometry(sz[0], sz[1], sz[2]), new THREE.MeshBasicMaterial({color: d.color || '#eafaff', transparent: true, opacity: 0.9}));
+  const h = 1.2;
+  m.position.set(P.x + dx * 0.8, h, P.z + dz * 0.8);
+  scene.add(m);
+  projs.push({m, x: m.position.x, z: m.position.z, h, dx, dz, speed: d.speed, life: d.life, dmg: d.dmg});
+}
+function hitDummy(d, dmg, dx, dz) {
+  d.hp -= dmg; d.kx = dx * 2.5; d.kz = dz * 2.5; d.flash = 0.15;
+  spawnPop(String(dmg), d.x, 2.6, d.z, '#ffe27a');
+  if (d.hp <= 0) { d.alive = false; d.respawn = 3; d.mesh.visible = false; spawnDust(d.x, d.z, 10); }
+}
+
+/* ============ kunai: yours only, thrown, and picked back up ============ */
+const steel = new THREE.MeshPhongMaterial({color:'#7c848e', specular:'#e8eef4', shininess:70, flatShading:true});
+const wrapM = new THREE.MeshLambertMaterial({color:'#2a2420'});
+function kunaiMesh() {
+  const g = new THREE.Group();
+  const blade = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.34, 4), steel);
+  blade.rotation.x = Math.PI / 2; blade.position.z = 0.2; g.add(blade);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2, 8), wrapM);
+  grip.rotation.x = Math.PI / 2; grip.position.z = -0.05; g.add(grip);
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  scene.add(g);
+  return g;
+}
+// the flight path, worked out the same way the kunai flies, for the aim arc
+function kunaiPath(x, z, ang, lob) {
+  const pts = [];
+  let px = x, py = 1.3, pz = z;
+  let vx = Math.sin(ang) * TUNE.kunaiSpeed, vy = lob, vz = Math.cos(ang) * TUNE.kunaiSpeed;
+  const dt = 0.04;
+  for (let s = 0; s < 150; s++) {
+    pts.push(new THREE.Vector3(px, py, pz));
+    vy -= TUNE.kunaiGravity * dt;
+    px += vx * dt; py += vy * dt; pz += vz * dt;
+    if (py <= 0.05 || solidAt(px, pz)) break;
+  }
+  return pts;
+}
+function throwKunai(ang, lob) {
+  if (P.kunai <= 0) { spawnPop('No kunai', P.x, 2.4, P.z, '#d8e2ee'); return; }
+  P.kunai--; P.castT = 0.2;
+  const sx = Math.sin(ang), sz = Math.cos(ang);
+  const k = {m: kunaiMesh(), x: P.x + sx * 0.8, y: 1.3, z: P.z + sz * 0.8,
+             vx: sx * TUNE.kunaiSpeed, vy: lob, vz: sz * TUNE.kunaiSpeed, life: 3, state: 'flying', px: 0, pz: 0};
+  k.m.position.set(k.x, k.y, k.z);
+  kunai.push(k);
+}
+const arcLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({color:0xfff0c0, dashSize:0.25, gapSize:0.18, transparent:true, opacity:0.9}));
+arcLine.visible = false; scene.add(arcLine);
+const landRing = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.34, 20), new THREE.MeshBasicMaterial({color:0xfff0c0, transparent:true, opacity:0.85, side:THREE.DoubleSide}));
+landRing.rotation.x = -Math.PI / 2; landRing.visible = false; scene.add(landRing);
+function showArc(ang) {
+  const pts = kunaiPath(P.x, P.z, ang, TUNE.kunaiLobHold);
+  arcLine.geometry.dispose();
+  arcLine.geometry = new THREE.BufferGeometry().setFromPoints(pts);
+  arcLine.computeLineDistances();
+  arcLine.visible = true;
+  const end = pts[pts.length - 1];
+  landRing.position.set(end.x, 0.06, end.z); landRing.visible = true;
+}
+function hideArc() { arcLine.visible = false; landRing.visible = false; }
+function updateKunai(dt) {
+  for (let q = kunai.length - 1; q >= 0; q--) {
+    const k = kunai[q];
+    if (k.state === 'flying') {
+      k.life -= dt;
+      k.px = k.x; k.pz = k.z;
+      k.vy -= TUNE.kunaiGravity * dt;
+      k.x += k.vx * dt; k.y += k.vy * dt; k.z += k.vz * dt;
+      let landed = false;
+      for (const d of dummies) {
+        if (d.alive && k.y < 2.6 && Math.hypot(d.x - k.x, d.z - k.z) < 0.6) {
+          hitDummy(d, TUNE.kunaiDmg, k.vx, k.vz); landed = true; break;
+        }
+      }
+      if (solidAt(k.x, k.z)) { k.x = k.px; k.z = k.pz; landed = true; }   // stick in the wall where it was
+      if (k.y <= 0.05 || k.life <= 0) landed = true;
+      if (landed) { k.state = 'ground'; k.y = 0.05; k.m.rotation.set(0, Math.atan2(k.vx, k.vz), 0); }
+      else {
+        k.m.rotation.set(-Math.atan2(k.vy, Math.hypot(k.vx, k.vz)), Math.atan2(k.vx, k.vz), 0);
+      }
+      k.m.position.set(k.x, k.y, k.z);
+    }
+    // a kunai you threw lies on the ground until you walk over it
+    if (k.state === 'ground' && P.kunai < TUNE.kunaiMax && P.y < 0.5 &&
+        Math.hypot(P.x - k.x, P.z - k.z) < TUNE.kunaiPickup) {
+      scene.remove(k.m); kunai.splice(q, 1);
+      P.kunai++; spawnPop('+1 kunai', P.x, 2.4, P.z, '#d8e2ee');
+    }
+  }
+}
+
+/* ============ input (controller only) ============ */
+let pad = null;
+const prevBtn = {};
+function readPad() {
+  const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+  return pads[0] || null;
+}
+function edge(i) {
+  const now = !!(pad && pad.buttons[i] && pad.buttons[i].pressed);
+  const e = now && !prevBtn[i]; prevBtn[i] = now; return e;
+}
+function held(i) { return !!(pad && pad.buttons[i] && pad.buttons[i].pressed); }
+const dz = v => Math.abs(v) < TUNE.deadzone ? 0 : v;
+
+function pickUpdate() {
+  if (edge(15)) pickIdx = 1;
+  if (edge(14)) pickIdx = 0;
+  $('pk-naruto').style.outline = pickIdx === 0 ? '3px solid #ff8a3a' : 'none';
+  $('pk-sasuke').style.outline = pickIdx === 1 ? '3px solid #ff8a3a' : 'none';
+  if (edge(0)) applyChar(pickIdx ? 'sasuke' : 'naruto');
+}
+let pickIdx = 0;
+function applyChar(name) {
+  chosenChar = name; JUTSU = JSETS[name];
+  scene.remove(ninja.g);
+  ninja = makeNinja(...CHAR_COLORS[name]);
+  scene.add(ninja.g);
+  $('pick').style.display = 'none';
+  $('who').textContent = name.toUpperCase();
+}
+
+/* ============ the rules ============ */
+function castJutsu(kind) {
+  const d = JUTSU[kind];
+  if (P.cd[kind] > 0 || P.chakra < d.chakra || P.dodgeT > 0 || P.dashT > 0) return;
+  P.chakra -= d.chakra; P.cd[kind] = d.cd; P.castT = 0.25;
+  const fx = Math.sin(P.face), fz = Math.cos(P.face);
+  if (d.type === 'shield') { P.shieldT = d.dur; shield.visible = true; spawnPop(d.name, P.x, 2.4, P.z, '#e9d9a0'); }
+  else if (d.type === 'burst') { spawnPop(d.name, P.x, 2.6, P.z, d.color || '#d9b25e'); burst(d); }
+  else if (d.type === 'dash') { P.dashT = d.dur; P.dashSp = d.speed; P.dashDx = fx; P.dashDz = fz; P.dashDmg = d.dmg; P.dashHit = new Set(); spawnPop(d.name, P.x, 2.6, P.z, d.color || '#fff3c4'); spawnDust(P.x, P.z, 4); }
+  else { spawnPop(d.name, P.x, 2.6, P.z, d.color); spawnProjectile(kind, fx, fz); }
+}
+function burst(d) {
+  spawnPop('Sand Burst', P.x, 2.6, P.z, '#d9b25e');
+  spawnDust(P.x, P.z, 14);
+  for (const t of dummies) {
+    if (!t.alive) continue;
+    const dx = t.x - P.x, dzz = t.z - P.z, dist = Math.hypot(dx, dzz);
+    if (dist <= d.radius) hitDummy(t, d.dmg, dx / (dist || 1), dzz / (dist || 1));
+  }
+}
+function meleeHit(dmg, range, kb) {
+  const fx = Math.sin(P.face), fz = Math.cos(P.face);
+  for (const d of dummies) {
+    if (!d.alive) continue;
+    const dx = d.x - P.x, dzz = d.z - P.z, dist = Math.hypot(dx, dzz);
+    if (dist <= range + 0.3 && (dx*fx + dzz*fz) / (dist || 1) > 0.2) hitDummy(d, dmg, fx * kb, fz * kb);
+  }
+}
+function lightAttack() {
+  if (P.strikeCd > 0 || P.dodgeT > 0 || P.heavyT > 0 || P.stam < TUNE.lightStam) return;
+  P.stam -= TUNE.lightStam; P.staminaT = TUNE.stamDelay; P.strikeCd = TUNE.lightCd;
+  P.strikeT = 0.3; P.strikeKind = 'light';
+  meleeHit(TUNE.lightDmg, TUNE.lightRange, 1);
+}
+function heavyAttack() {
+  if (P.heavyCd > 0 || P.dodgeT > 0 || P.heavyT > 0 || P.stam < TUNE.heavyStam) return;
+  P.stam -= TUNE.heavyStam; P.staminaT = TUNE.stamDelay; P.heavyCd = TUNE.heavyCd;
+  P.heavyT = TUNE.heavyWindup; P.strikeT = TUNE.heavyWindup + 0.25; P.strikeKind = 'heavy';
+}
+function useCapsule() {
+  if (P.capsules <= 0 || P.hp >= TUNE.hpMax) return;
+  P.capsules--; P.hp = Math.min(TUNE.hpMax, P.hp + TUNE.capsuleHeal);
+  spawnPop('+' + TUNE.capsuleHeal, P.x, 2.4, P.z, '#8fe89a');
+}
+function dodge(mx, mz) {
+  if (P.dodgeCd > 0 || P.dodgeT > 0 || P.stam < TUNE.dodgeStam || P.y > 0) return;
+  const f = (mx || mz) ? [mx, mz] : [Math.sin(P.face), Math.cos(P.face)];
+  P.dodgeDx = f[0]; P.dodgeDz = f[1];
+  P.dodgeT = TUNE.dodgeTime; P.dodgeCd = TUNE.dodgeCd;
+  P.stam -= TUNE.dodgeStam; P.staminaT = TUNE.stamDelay;
+  spawnDust(P.x, P.z, 5);
+}
+function respawnPlayer() {
+  P.x = spawn.x; P.z = spawn.z; P.y = 0; P.vy = 0; P.hp = TUNE.hpMax;
+  spawnPop('Back to the village', P.x, 2.6, P.z, '#fff3c4');
+}
+
+/* ============ update ============ */
+let t = 0;
+let stickOn = false;
+function update(dt) {
+  t += dt;
+  pad = readPad();
+  document.getElementById('noPad').style.display = pad ? 'none' : 'flex';
+  if (!pad) return;
+  if (!chosenChar) { pickUpdate(); return; }
+
+  // button edges, read once per frame
+  const pr = {A:edge(0), B:edge(1), X:edge(2), Y:edge(3), LB:edge(4), Back:edge(8), Start:edge(9)};
+  const jutsuMode = held(7);   // RT held: Y, A, X and B cast jutsu instead
+  // RB: a tap throws a kunai straight ahead; holding it aims with the right stick, and letting go throws
+  const rbNow = held(5);
+  if (rbNow && !P.rbWas) { P.rbT = 0; P.aiming = false; }
+  if (rbNow) { P.rbT += dt; if (P.rbT >= TUNE.aimHold && !jutsuMode) P.aiming = true; }
+  if (!rbNow && P.rbWas && !jutsuMode) {
+    throwKunai(P.aiming ? P.aimAng : P.face, P.aiming ? TUNE.kunaiLobHold : TUNE.kunaiLobTap);
+  }
+  if (!rbNow) P.aiming = false;
+  P.rbWas = rbNow;
+  const lx = dz(pad.axes[0] || 0), ly = dz(pad.axes[1] || 0), rx = dz(pad.axes[2] || 0), ry = dz(pad.axes[3] || 0);
+
+  // camera: the right stick orbits, and it swings back behind you when you let go
+  if (rx !== 0 || ry !== 0) { cam.idle = 0; }
+  else cam.idle += dt;
+  if (!P.aiming) {
+    cam.yaw -= rx * TUNE.camSens * dt;
+    cam.elev = clamp(cam.elev + ry * TUNE.camSens * 0.5 * dt, 0.12, 1.1);
+  }
+
+  // walk direction, relative to the camera
+  const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw);
+  const rxv = Math.cos(cam.yaw), rzv = -Math.sin(cam.yaw);
+  let mx = rxv * lx + fx * (-ly), mz = rzv * lx + fz * (-ly);
+  const mag = clamp(Math.hypot(lx, ly), 0, 1);
+  const len = Math.hypot(mx, mz) || 1; mx /= len; mz /= len;
+  if (P.aiming) {
+    const base = Math.atan2(-Math.sin(cam.yaw), -Math.cos(cam.yaw));
+    const off = Math.hypot(rx, ry) > 0.2 ? Math.atan2(rx, -ry) : 0;
+    P.aimAng = base + off;
+    P.face += wrap(P.aimAng - P.face) * Math.min(1, dt * 14);
+    showArc(P.aimAng);
+  } else hideArc();
+  if (cam.idle > TUNE.camRecenter && mag > 0.2) {
+    const want = Math.atan2(-mx, -mz);
+    cam.yaw += wrap(want - cam.yaw) * Math.min(1, dt * 2);
+  }
+
+  // sprint and stamina
+  const wantSprint = held(10) && mag > 0.2 && P.stam > TUNE.sprintMin && P.dodgeT <= 0;
+  if (wantSprint) { P.stam -= TUNE.stamDrain * dt; P.staminaT = TUNE.stamDelay; }
+  if (P.staminaT > 0) P.staminaT -= dt;
+  else P.stam = Math.min(TUNE.stamMax, P.stam + TUNE.stamRegen * dt);
+  P.stam = clamp(P.stam, 0, TUNE.stamMax);
+
+  // chakra regenerates slowly all the time
+  P.chakra = Math.min(TUNE.chakraMax, P.chakra + TUNE.chakraRegen * dt);
+
+  // actions: face buttons do jutsu while RT is held, otherwise jump, dodge and attack
+  const grounded = P.y <= 0.001;
+  if (jutsuMode) {
+    if (pr.Y) castJutsu('y');
+    if (pr.A) castJutsu('a');
+    if (pr.X) castJutsu('x');
+    if (pr.B) castJutsu('b');
+  } else {
+    if (pr.A && grounded && P.stam >= TUNE.jumpStam && P.dodgeT <= 0 && !P.blocking) {
+      P.vy = TUNE.jumpV; P.stam -= TUNE.jumpStam; P.staminaT = TUNE.stamDelay; spawnDust(P.x, P.z, 4);
+    }
+    if (pr.B) dodge(mx * (mag > 0.2 ? 1 : 0), mz * (mag > 0.2 ? 1 : 0));
+    if (pr.X) lightAttack();
+    if (pr.Y) heavyAttack();
+  }
+  // LT: hold to block (on the ground, not mid-dodge or mid-attack)
+  P.blocking = held(6) && grounded && P.dodgeT <= 0 && P.strikeT <= 0 && P.heavyT <= 0;
+  if (pr.LB) useCapsule();
+  if (pr.Back) respawnPlayer();
+
+  // movement: a dodge overrides walking
+  let vx = 0, vz = 0;
+  if (P.dashT > 0) {
+    P.dashT -= dt;
+    vx = P.dashDx * P.dashSp; vz = P.dashDz * P.dashSp;
+    for (const t of dummies) {
+      if (!t.alive || P.dashHit.has(t)) continue;
+      if (Math.hypot(t.x - (P.x + P.dashDx * 0.6), t.z - (P.z + P.dashDz * 0.6)) < 1.1) { P.dashHit.add(t); hitDummy(t, P.dashDmg, P.dashDx, P.dashDz); }
+    }
+  } else if (P.dodgeT > 0) {
+    P.dodgeT -= dt;
+    vx = P.dodgeDx * TUNE.dodgeSpeed; vz = P.dodgeDz * TUNE.dodgeSpeed;
+    if (P.dodgeT <= 0) spawnDust(P.x, P.z, 3);
+  } else if (P.strikeT <= 0 && P.heavyT <= 0) {
+    const sp = P.aiming ? TUNE.walk * 0.35 : P.blocking ? TUNE.walk * TUNE.blockMove : wantSprint ? TUNE.sprint : TUNE.walk;
+    vx = mx * mag * sp; vz = mz * mag * sp;
+  }
+  if (P.heavyT > 0) {
+    P.heavyT -= dt;
+    if (P.heavyT <= 0) { P.heavyT = 0; meleeHit(TUNE.heavyDmg, TUNE.heavyRange, 2.6); }
+  }
+  // ease toward the target speed, so it feels weighted
+  P.walk += dt * (Math.hypot(vx, vz) > 0.1 ? 1 : 0);
+  const k = Math.min(1, dt * TUNE.accel);
+  P.vxS = (P.vxS || 0) + (vx - (P.vxS || 0)) * k;
+  P.vzS = (P.vzS || 0) + (vz - (P.vzS || 0)) * k;
+  const step = dt;
+  const nx = P.x + P.vxS * step, nz = P.z + P.vzS * step;
+  if (!blockedAt(nx, P.z)) P.x = nx; else P.vxS = 0;
+  if (!blockedAt(P.x, nz)) P.z = nz; else P.vzS = 0;
+
+  // face the way you walk
+  if (mag > 0.15 && P.strikeT <= 0 && P.dodgeT <= 0 && !P.aiming) {
+    const want = Math.atan2(vx, vz);
+    P.face += wrap(want - P.face) * Math.min(1, dt * TUNE.accel);
+  }
+
+  // jump and gravity
+  if (!grounded || P.vy !== 0) {
+    P.vy -= TUNE.gravity * dt;
+    P.y += P.vy * dt;
+    if (P.y <= 0) { P.y = 0; if (P.vy < -6) spawnDust(P.x, P.z, 6); P.vy = 0; }
+  }
+
+  // timers
+  P.strikeCd = Math.max(0, P.strikeCd - dt);
+  P.heavyCd = Math.max(0, P.heavyCd - dt);
+  P.strikeT = Math.max(0, P.strikeT - dt);
+  P.dodgeCd = Math.max(0, P.dodgeCd - dt);
+  P.castT = Math.max(0, P.castT - dt);
+  P.shieldT = Math.max(0, P.shieldT - dt);
+  if (P.shieldT <= 0) shield.visible = false;
+  for (const kk of ['y','a','x','b']) P.cd[kk] = Math.max(0, P.cd[kk] - dt);
+
+  if (P.hp <= 0) respawnPlayer();
+
+  // dummies: they knock back, flash, respawn, and hit back when you're close
+  for (const d of dummies) {
+    if (!d.alive) {
+      d.respawn -= dt;
+      if (d.respawn <= 0) { d.alive = true; d.hp = d.max; d.x = d.home.x; d.z = d.home.z; d.mesh.visible = true; }
+      continue;
+    }
+    d.kx *= Math.pow(0.02, dt); d.kz *= Math.pow(0.02, dt);
+    if (!blockedAt(d.x + d.kx * dt, d.z)) d.x += d.kx * dt;
+    if (!blockedAt(d.x, d.z + d.kz * dt)) d.z += d.kz * dt;
+    d.flash = Math.max(0, d.flash - dt);
+    d.cd = Math.max(0, d.cd - dt);
+    if (Math.hypot(P.x - d.x, P.z - d.z) < 2.2 && d.cd <= 0) {
+      d.cd = TUNE.dummyCd;
+      const fromX = d.x - P.x, fromZ = d.z - P.z, facing = (Math.sin(P.face) * fromX + Math.cos(P.face) * fromZ) > 0;
+      if (P.shieldT > 0 || (P.blocking && facing)) {
+        spawnPop('Blocked', P.x, 2.4, P.z, '#e9d9a0');
+        if (P.blocking && !(P.shieldT > 0)) { P.stam = Math.max(0, P.stam - TUNE.blockStam); P.staminaT = TUNE.stamDelay; }
+      }
+      else { P.hp -= TUNE.dummyHit; P.shake = 0.25; spawnPop('-' + TUNE.dummyHit, P.x, 2.6, P.z, '#ff8a6a'); }
+    }
+    d.mesh.position.set(d.x, 0, d.z);
+    d.mesh.rotation.y = Math.atan2(P.x - d.x, P.z - d.z);
+    const s = 1 + d.flash * 0.6;
+    d.mesh.scale.set(s, 1, s);
+  }
+
+  // projectiles
+  for (let q = projs.length - 1; q >= 0; q--) {
+    const pj = projs[q];
+    pj.life -= dt;
+    pj.x += pj.dx * pj.speed * dt; pj.z += pj.dz * pj.speed * dt;
+    pj.m.position.set(pj.x, pj.h, pj.z);
+    pj.m.rotation.y = Math.atan2(pj.dx, pj.dz);
+    let gone = pj.life <= 0 || solidAt(pj.x, pj.z);
+    for (const d of dummies) {
+      if (!d.alive || gone) continue;
+      if (Math.hypot(d.x - pj.x, d.z - pj.z) < 0.9) { hitDummy(d, pj.dmg, pj.dx, pj.dz); gone = true; }
+    }
+    if (gone) { scene.remove(pj.m); projs.splice(q, 1); }
+  }
+
+  updateKunai(dt);
+
+  // sand puffs
+  for (let q = parts.length - 1; q >= 0; q--) {
+    const p = parts[q];
+    p.life -= dt; p.vy -= 9 * dt;
+    p.m.position.x += p.vx * dt; p.m.position.y = Math.max(0.05, p.m.position.y + p.vy * dt); p.m.position.z += p.vz * dt;
+    p.m.material.transparent = true; p.m.material.opacity = Math.max(0, p.life / 0.7);
+    if (p.life <= 0) { scene.remove(p.m); parts.splice(q, 1); }
+  }
+
+  // camera shake from the dummy's hit
+  P.shake = Math.max(0, P.shake - dt);
+  const sh = P.shake * 0.25;
+
+  // ninja model and animation
+  const walkSp = Math.hypot(P.vxS, P.vzS);
+  P.walk += dt * walkSp * 1.4;
+  ninja.g.position.set(P.x, P.y, P.z);
+  ninja.g.rotation.y = P.face;
+  const swing = Math.sin(P.walk) * clamp(walkSp / TUNE.sprint, 0, 1) * 0.8;
+  ninja.legL.rotation.x = P.y > 0 ? 0.6 : swing;
+  ninja.legR.rotation.x = P.y > 0 ? 0.6 : -swing;
+  ninja.armL.rotation.x = P.y > 0 ? -2.2 : -swing * 0.7;
+  if (P.heavyT > 0) {
+    // winding up: arm pulled back
+    ninja.armR.rotation.x = 1.2;
+  } else if (P.strikeT > 0) {
+    const len = P.strikeKind === 'heavy' ? 0.55 : 0.3;
+    const p = 1 - P.strikeT / (len + (P.strikeKind === 'heavy' ? 0.25 : 0));
+    ninja.armR.rotation.x = -Math.sin(clamp(p, 0, 1) * Math.PI) * (P.strikeKind === 'heavy' ? 2.4 : 1.8) - 0.2;
+  } else ninja.armR.rotation.x = P.y > 0 ? -2.2 : swing * 0.7;
+  if (P.blocking) { ninja.armL.rotation.x = -1.4; ninja.armR.rotation.x = -0.9; }
+  if (P.castT > 0) { ninja.armL.rotation.x = -1.6; ninja.armR.rotation.x = -1.6; }
+
+  // shield bubble
+  shield.position.set(P.x, 1.1, P.z);
+  const pulse = 1 + Math.sin(t * 6) * 0.03;
+  shield.scale.setScalar(pulse);
+
+  // camera: orbit the ninja, looking at his chest
+  const tx = P.x, ty = P.y + 1.4, tz = P.z;
+  const d = TUNE.camDist, cosE = Math.cos(cam.elev), sinE = Math.sin(cam.elev);
+  const want = new THREE.Vector3(tx + Math.sin(cam.yaw) * d * cosE, ty + d * sinE, tz + Math.cos(cam.yaw) * d * cosE);
+  // the camera stops short of walls, so a building never hides you (or puts the camera inside it)
+  let camGoal = want;
+  for (let s = 1; s >= 0.05; s -= 0.05) {
+    const q = new THREE.Vector3().lerpVectors(new THREE.Vector3(tx, ty, tz), want, s);
+    camGoal = q;
+    if (!solidAt(q.x, q.z)) break;
+  }
+  camera.position.lerp(camGoal, 1 - Math.pow(0.0005, dt));
+  camera.position.x += (Math.random() - 0.5) * sh;
+  camera.position.y += (Math.random() - 0.5) * sh;
+  camera.lookAt(tx, ty, tz);
+
+  // the sun follows the ninja, so his shadow stays sharp
+  sun.position.set(P.x + 12, 22, P.z + 10);
+  sun.target.position.set(P.x, 0, P.z);
+  sun.target.updateMatrixWorld();
+
+  // floating numbers rise and fade
+  for (let q = pops.length - 1; q >= 0; q--) {
+    const p = pops[q];
+    p.t += dt;
+    const v = new THREE.Vector3(p.x, p.y + p.t * 1.2, p.z).project(camera);
+    p.el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px';
+    p.el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
+    p.el.style.opacity = String(Math.max(0, 1 - p.t / 0.9));
+    if (p.t > 0.9) { p.el.remove(); pops.splice(q, 1); }
+  }
+
+  updateHud();
+}
+
+/* ============ the HUD ============ */
+const $ = id => document.getElementById(id);
+function updateHud() {
+  // holding RT brings up the jutsu wheel: name, chakra cost, and any cooldown left
+  const wheel = $('wheel'), jm = held(7);
+  wheel.style.display = jm ? 'block' : 'none';
+  if (jm) for (const kk of ['y','a','x','b']) {
+    const d = JUTSU[kk], cd = P.cd[kk];
+    $('wn-' + kk).textContent = d.name;
+    $('wc-' + kk).textContent = d.chakra + ' chakra' + (cd > 0 ? ' · ' + cd.toFixed(1) + 's' : '');
+    $('w-' + kk).classList.toggle('dim', P.chakra < d.chakra || cd > 0);
+  }
+  $('hpb').firstElementChild.style.width = (P.hp / TUNE.hpMax * 100) + '%';
+  $('chb').firstElementChild.style.width = (P.chakra / TUNE.chakraMax * 100) + '%';
+  $('stb').firstElementChild.style.width = (P.stam / TUNE.stamMax * 100) + '%';
+  $('chTxt').textContent = Math.round(P.chakra) + ' / ' + TUNE.chakraMax;
+  $('stTxt').textContent = Math.round(P.stam) + ' / ' + TUNE.stamMax;
+  $('kun').textContent = P.kunai + ' / ' + TUNE.kunaiMax;
+  $('caps').innerHTML = Array.from({length: TUNE.capsuleMax}, (_, i) => '<span class="dot' + (i < P.capsules ? '' : ' off') + '"></span>').join('');
+  for (const kk of ['y','a','x','b']) {
+    const d = JUTSU[kk];
+    $('n-' + kk).textContent = d.name;
+    $('c-' + kk).textContent = d.chakra + ' chakra';
+    $('cd-' + kk).style.width = (P.cd[kk] / d.cd * 100) + '%';
+    $('s-' + kk).style.opacity = P.chakra >= d.chakra ? '1' : '0.55';
+  }
+}
+
+/* ============ loop ============ */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  update(dt);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+addEventListener('gamepadconnected', () => { pad = readPad(); });
+requestAnimationFrame(frame);
+setTimeout(() => { document.getElementById('legend').style.opacity = '0'; }, 12000);
+</script>
+</body>
+</html>
+
+</body></html>

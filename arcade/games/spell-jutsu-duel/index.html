@@ -1,0 +1,865 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Spell Jutsu Duel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one-screen night arena; two ninjas face off on a rooftop, a scroll panel below runs each turn. Single dark look by choice. */
+:root{
+  --night:#141a33; --night-2:#1f2750; --ink:#0c1024;
+  --paper:#f3e6c8; --paper-ink:#2b2216;
+  --moon:#f6efd6; --persimmon:#ff7a3d; --muted:#a6acd0;
+  --display:"Dela Gothic One", "Arial Black", system-ui, sans-serif;
+  --body:"Zen Maru Gothic", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--night);color:var(--moon);font-family:var(--body);font-size:16px;margin:0}
+.wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:16px 32px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,46px);margin:0;letter-spacing:.02em;text-wrap:balance;line-height:1.05}
+h1 span{color:var(--persimmon)}
+.tag{color:var(--muted);margin:4px 0 0;font-weight:500}
+button{font-family:var(--body);font-weight:900;font-size:16px;border:0;border-radius:10px;padding:12px 18px;cursor:pointer;background:var(--persimmon);color:var(--ink)}
+button.ghost{background:transparent;color:var(--moon);border:2px solid var(--night-2)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--moon);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+
+/* setup */
+.setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.pcard{background:var(--night-2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.pcard h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+.lab{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;flex-direction:column;gap:6px}
+input[type=text]{font-family:var(--body);font-size:18px;font-weight:700;padding:10px 12px;border-radius:10px;border:2px solid var(--ink);background:var(--ink);color:var(--moon);width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--ink);color:var(--moon);padding:8px 12px;border-radius:999px;font-size:14px;border:2px solid transparent}
+.chip[aria-pressed=true]{border-color:var(--c,var(--persimmon));color:var(--c,var(--persimmon))}
+.swatch{width:36px;height:36px;padding:0;border-radius:50%;background:var(--c);border:3px solid transparent}
+.swatch[aria-pressed=true]{border-color:var(--moon);box-shadow:0 0 0 2px var(--ink) inset}
+.lvl-note{font-size:14px;color:var(--muted);margin:0;text-transform:none;letter-spacing:0;font-weight:500;line-height:1.4}
+.start-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.cycle{background:var(--night-2);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-weight:700}
+.cycle .t{color:var(--muted);font-size:13px;letter-spacing:.06em;text-transform:uppercase;width:100%}
+.el{color:var(--c);font-weight:900}
+.arrow{color:var(--muted);font-size:13px}
+
+/* arena */
+.arena{position:relative;border-radius:16px;overflow:hidden;background:linear-gradient(var(--ink),var(--night-2));aspect-ratio:16/8;max-width:100%;min-height:220px}
+.moon{position:absolute;right:42%;top:12%;width:12%;aspect-ratio:1;border-radius:50%;background:var(--moon);box-shadow:0 0 60px 10px rgba(246,239,214,.25)}
+.roof{position:absolute;left:0;right:0;bottom:0;height:22%;background:var(--ink);clip-path:polygon(0 30%,8% 0,92% 0,100% 30%,100% 100%,0 100%)}
+.ninja{position:absolute;bottom:20%;width:22%;max-width:150px}
+.ninja.left{left:9%}
+.ninja.right{right:9%}
+.ninja.right svg{transform:scaleX(-1)}
+.ninja.hit{animation:shake .45s}
+.ninja.turn::after{content:"";position:absolute;left:20%;right:20%;bottom:-8px;height:6px;border-radius:6px;background:var(--c)}
+.shield{position:absolute;inset:-14% -18%;border-radius:50%;border:4px solid var(--sc);box-shadow:0 0 22px var(--sc),inset 0 0 22px var(--sc);opacity:.85;animation:pulse 1.6s ease-in-out infinite}
+.shield span{position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--sc);white-space:nowrap;text-shadow:0 2px 0 var(--ink)}
+@keyframes pulse{50%{opacity:.5}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-4deg)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+.hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:12px}
+.hp{flex:1;max-width:44%;min-width:0}
+.hp .name{font-weight:900;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hp.r{text-align:right}
+.bar{height:12px;border-radius:8px;background:rgba(0,0,0,.45);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;width:100%;background:var(--c);transition:width .6s ease}
+.hp.r .bar i{margin-left:auto}
+.hp small{color:var(--muted);font-variant-numeric:tabular-nums;font-weight:700}
+.fx{position:absolute;inset:0;pointer-events:none}
+.orb{position:absolute;bottom:38%;width:9%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#fff 0 20%,var(--c) 45%,transparent 70%);filter:drop-shadow(0 0 14px var(--c))}
+.banner{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(18px,4.6vw,36px);white-space:nowrap;text-shadow:0 3px 0 var(--ink);animation:pop 1s ease-out forwards}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}80%{opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}
+
+/* scroll panel */
+.scroll{background:var(--paper);color:var(--paper-ink);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:inset 0 0 0 6px #e4d2a8}
+.who{font-family:var(--display);font-size:22px;margin:0}
+.jutsu{font-weight:900;color:#8a3a14;margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.08em}
+.sentence{font-size:19px;font-weight:700;margin:0;line-height:1.45;max-width:60ch}
+.sentence b{display:inline-block;min-width:4ch;border-bottom:3px solid var(--paper-ink)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.wordbox{display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:2px dashed #d4bf92}
+.wordbox:first-of-type{border-top:0;padding-top:0}
+.scroll input[type=text]{background:#fffaf0;color:var(--paper-ink);border-color:var(--paper-ink);font-size:26px;letter-spacing:.08em;flex:1;min-width:0}
+.scroll button.ghost{color:var(--paper-ink);border-color:var(--paper-ink)}
+.scroll .chip{background:#fffaf0;color:var(--paper-ink);border-color:#d4bf92;font-weight:900}
+.scroll .chip[aria-pressed=true]{background:var(--c);color:var(--ink);border-color:var(--paper-ink)}
+.picktitle{font-weight:900;margin:0;font-size:16px}
+.needs{font-size:14px;margin:0;color:#6b5a3e;font-weight:700}
+.seals{display:flex;flex-wrap:wrap;gap:6px;min-height:30px}
+.seal{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;font-weight:900;font-size:14px;animation:sealIn .2s;background:var(--paper-ink);color:var(--paper)}
+@keyframes sealIn{from{transform:scale(.3) rotate(-30deg)}}
+.result{font-size:18px;font-weight:700;margin:0;line-height:1.45}
+.result .ok{color:#1d7a46}.result .no{color:#b3202f}
+.correct{font-family:var(--display);font-size:26px;letter-spacing:.06em;margin:0}
+.peeked{font-family:var(--display);font-size:30px;letter-spacing:.08em;color:#8a3a14;margin:0}
+.log{color:var(--muted);font-size:14px;margin:0}
+.hint{color:var(--muted);font-size:14px;margin:0}
+.scroll .hint{color:#6b5a3e}
+.win h2{font-family:var(--display);font-weight:400;font-size:32px;margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stat{background:var(--night-2);border-radius:12px;padding:14px}
+.stat b{font-size:22px;font-variant-numeric:tabular-nums}
+.missed{margin:6px 0 0;padding-left:18px;color:var(--muted)}
+button{touch-action:manipulation}
+.scroll input.active{box-shadow:0 0 0 3px var(--persimmon)}
+.scroll input[readonly]{caret-color:transparent;cursor:pointer}
+.kb{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--ink);border-top:2px solid var(--night-2);padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;user-select:none;-webkit-user-select:none}
+.kb .r{display:flex;gap:5px;justify-content:center}
+.kb button{flex:1;max-width:46px;min-width:0;height:48px;padding:0;border-radius:7px;font-size:19px;background:var(--night-2);color:var(--moon);text-transform:uppercase}
+.kb button:active{background:var(--persimmon);color:var(--ink)}
+.kb button.wide{flex:1.7;max-width:78px;font-size:15px;text-transform:none}
+.kb button.go{background:var(--persimmon);color:var(--ink)}
+body.kb-on .wrap{padding-bottom:200px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+.titles{min-width:0;flex:1 1 280px}
+.sharebox{background:var(--night-2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.share-t{margin:0;font-weight:700}
+.sharebox input[type=text]{font-size:15px;flex:1;min-width:0}
+.textlink{color:var(--persimmon);font-weight:900}
+.notice{background:var(--night-2);border-left:4px solid var(--persimmon);border-radius:8px;padding:12px 14px;margin:0;font-weight:700;line-height:1.4}
+.seatline{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-height:40px}
+.you{color:var(--good,#5fd38d);font-weight:900}
+.taken{color:var(--muted);font-weight:700}
+button.small{padding:6px 12px;font-size:14px}
+.chips button:disabled{opacity:.5}
+hr.cut{border:0;border-top:2px dashed #d4bf92;margin:2px 0;width:100%}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="titles">
+      <h1>Spell Jutsu <span>Duel</span></h1>
+      <p class="tag">Hear the word. Spell it right and your jutsu strikes. Miss one letter and it fizzles.</p>
+    </div>
+    <button class="ghost small" id="shareBtn" aria-expanded="false" aria-controls="sharePanel">📲 Share game</button>
+  </header>
+  <div class="sharebox" id="sharePanel" hidden>
+    <p class="share-t">Send this link. Tapping it opens the game in any phone or computer browser.</p>
+    <div class="row">
+      <input type="text" id="shareLink" readonly aria-label="Game link">
+      <button id="copyLink">Copy link</button>
+    </div>
+    <div class="row">
+      <a class="textlink" id="smsLink" href="#">Open in Messages</a>
+      <span class="hint" id="copyMsg">If Messages doesn't open, copy the link and paste it into a text.</span>
+    </div>
+  </div>
+  <p class="notice" id="notice" hidden></p>
+
+  <section id="setupView">
+    <div class="setup" id="setupCards"></div>
+    <div class="cycle" id="cycleSetup" style="margin-top:16px"></div>
+    <div class="start-row" style="margin-top:16px" id="startRow"></div>
+  </section>
+
+  <section id="gameView" hidden>
+    <div class="arena" id="arena">
+      <div class="moon"></div>
+      <div class="roof"></div>
+      <div class="hud">
+        <div class="hp" id="hp0"><div class="name"></div><div class="bar"><i></i></div><small></small></div>
+        <div class="hp r" id="hp1"><div class="name"></div><div class="bar"><i></i></div><small></small></div>
+      </div>
+      <div class="ninja left" id="n0"></div>
+      <div class="ninja right" id="n1"></div>
+      <div class="fx" id="fx"></div>
+    </div>
+    <div class="scroll" id="panel"></div>
+    <div class="cycle" id="cycleGame" hidden></div>
+    <p class="log" id="log"></p>
+    <div class="start-row" id="gameCtl"></div>
+  </section>
+
+  <section id="winView" class="win" hidden></section>
+</div>
+<div class="kb" id="kb" hidden aria-label="Letter keyboard"></div>
+
+<script>
+/* Element cycle: each one beats the next. Fire > Wind > Lightning > Water > Fire */
+const ELEMENTS = {
+  fire:{label:"Fire", c:"#ff7a3d", beats:"wind", moves:["Ember Fox Blast","Phoenix Flare","Blazing Comet"]},
+  wind:{label:"Wind", c:"#7ee08a", beats:"lightning", moves:["Cyclone Palm","Razor Leaf Gale","Sky Blade Spiral"]},
+  lightning:{label:"Lightning", c:"#ffe14d", beats:"water", moves:["Thunder Hawk Dive","Storm Needle","Static Wolf Howl"]},
+  water:{label:"Water", c:"#4fb3ff", beats:"fire", moves:["Tidal Serpent","Rain Spear Volley","Whirlpool Fang"]}
+};
+const EL_KEYS = Object.keys(ELEMENTS);
+const counterOf = shield => EL_KEYS.find(k=>ELEMENTS[k].beats===shield);
+const BAND_COLORS = ["#ff7a3d","#4fb3ff","#ffe14d","#7ee08a","#c18bff","#ff6fae"];
+const LEVELS = {
+  beginner:{label:"Beginner", note:"Easy words. No elements to pick, just spell it right."},
+  medium:{label:"Medium", note:"Medium words. Pick the element that beats the enemy's shield for 1.5× damage."},
+  hard:{label:"Hard", note:"Hard words, sometimes two at once. Pick the wrong element and your jutsu backfires on you."}
+};
+const BONUS = 1.5, BACKFIRE = 12, DOUBLE_CHANCE = .4, MAX_HP = 100;
+/* Ninja 1 is always MC. Ninja 2's name comes from the level picked. */
+const LEVEL_NAMES = {beginner:"Ant", medium:"Drew", hard:"Ri"};
+
+const WORDS = {
+  beginner:`cat|The cat sat on the mat.
+dog|My dog loves to run.
+sun|The sun is hot today.
+jump|Ninjas jump from roof to roof.
+fish|A fish swims in the pond.
+tree|The bird is in the tree.
+frog|The frog hops on a lily pad.
+cake|We ate cake at the party.
+star|I see a bright star.
+ship|The ship sails on the sea.
+rain|Rain falls from the clouds.
+moon|The moon comes out at night.
+kite|Fly the kite in the wind.
+nest|The eggs are in the nest.
+milk|I drink milk with lunch.
+rock|He threw a rock in the lake.
+hand|Raise your hand to talk.
+duck|The duck says quack.
+snow|We built a man out of snow.
+blue|The sky is blue.
+play|Let's play a game.
+wind|The wind blew my hat away.
+fire|The ninja lit a fire.
+book|I read a book at bedtime.
+fast|The ninja is very fast.
+gold|The chest was full of gold.
+kick|He did a high kick.
+hide|Ninjas hide in the dark.
+mask|She wore a black mask.
+bird|A bird can fly high.
+road|The road goes up the hill.
+coin|I found a coin on the floor.`,
+  medium:`scroll|The ninja opened the secret scroll.
+shadow|He hid in the shadow of the wall.
+thunder|We heard thunder during the storm.
+castle|The king lives in a castle.
+dragon|The dragon breathed fire.
+bridge|They walked across the bridge.
+garden|Flowers grow in the garden.
+rocket|The rocket flew into space.
+pencil|Write your name with a pencil.
+monkey|The monkey climbed the tree.
+planet|Earth is a planet.
+jungle|Tigers live in the jungle.
+spider|The spider spun a web.
+winter|It snows in winter.
+button|Push the button to start.
+rabbit|The rabbit ate a carrot.
+ladder|Climb the ladder to the roof.
+circle|Draw a circle on the paper.
+friend|My friend came over to play.
+school|We learn math at school.
+people|Lots of people came to the show.
+because|I smiled because I was happy.
+village|The ninja guards the village.
+warrior|The warrior raised her sword.
+secret|Can you keep a secret?
+hidden|The treasure was hidden in a cave.
+answer|Do you know the answer?
+balance|Stand on one foot and keep your balance.
+quickly|The fox ran away quickly.
+station|The train stopped at the station.
+treasure|They found buried treasure.
+family|My family eats dinner together.
+believe|I believe you can do it.
+special|Today is a special day.`,
+  hard:`lightning|A bolt of lightning lit the sky.
+mountain|They climbed to the top of the mountain.
+invisible|The ninja turned invisible.
+champion|She is the spelling champion.
+knowledge|Reading gives you knowledge.
+enormous|The giant had enormous feet.
+mysterious|A mysterious stranger arrived.
+tomorrow|We will train again tomorrow.
+adventure|Every journey is an adventure.
+necessary|Water is necessary for life.
+separate|Keep the two teams separate.
+rhythm|Clap your hands to the rhythm.
+earthquake|The earthquake shook the town.
+telescope|Look at the stars with a telescope.
+daughter|The king had one daughter.
+chocolate|I love chocolate milk.
+Wednesday|We have practice on Wednesday.
+restaurant|We ate dinner at a restaurant.
+calendar|Mark the date on the calendar.
+discipline|Ninja training takes discipline.
+neighbor|Our neighbor has a big dog.
+silhouette|We saw his silhouette in the window.
+February|My birthday is in February.
+definitely|I will definitely be there.
+camouflage|The ninja used camouflage to hide.
+immediately|Come here immediately.
+government|The government makes the laws.
+weird|That was a weird noise.
+guarantee|I guarantee you will win.
+conscience|Listen to your conscience.
+achievement|Winning was a big achievement.
+exaggerate|Don't exaggerate the story.
+occasion|A birthday is a special occasion.`
+};
+const parsed = {};
+for (const k in WORDS) parsed[k] = WORDS[k].trim().split("\n").map(l=>{const [w,s]=l.split("|");return {w:w.trim(),s:s.trim()}});
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clone = o => o==null ? o : JSON.parse(JSON.stringify(o));
+const rid = () => Math.random().toString(36).slice(2,10);
+const freshStats = () => ({hits:0,fizzles:0,bonus:0,backfires:0,missed:[]});
+function freshMatch(){ return {status:"playing", hp:{"0":MAX_HP,"1":MAX_HP}, turn:0, phase:"ready", cur:null, last:null, winner:null, stats:{"0":freshStats(),"1":freshStats()}}; }
+function freshDoc(uid){ return {...freshMatch(), status:"lobby", seats:{
+  "0":{uid:uid||null, color:BAND_COLORS[0], lvl:"hard"},
+  "1":{uid:uid||null, color:BAND_COLORS[1], lvl:"beginner"}}}; }
+const seatName = (d,i) => i===0 ? "MC" : LEVEL_NAMES[d.seats["1"].lvl];
+
+/* ---------- storage: the shared online room, or a stand-in on this device ---------- */
+function mergeInto(a,b){ for(const k in b){ const v=b[k];
+  if(v && typeof v==="object" && !Array.isArray(v) && a[k] && typeof a[k]==="object" && !Array.isArray(a[k])) mergeInto(a[k],v); else a[k]=clone(v); } return a; }
+function makeLocalStore(){
+  let data=null; const subs=new Set();
+  const snap=()=>({exists:!!data, data:()=>clone(data)});
+  const emit=()=>setTimeout(()=>subs.forEach(f=>f(snap())));
+  return {
+    get: async()=>snap(),
+    set: async d=>{ data=clone(d); emit(); },
+    update: async d=>{ data=mergeInto(data||{},d); emit(); },
+    onSnapshot(f){ subs.add(f); setTimeout(()=>f(snap())); return ()=>subs.delete(f); }
+  };
+}
+let mode=null, store=null, myId=null, unsub=null, readOnly=false, onlineDb=null, onlineId=null;
+let latest=null, seenLastId, animating=false, panelKey="";
+const mine = i => !!(latest && latest.seats[String(i)].uid && latest.seats[String(i)].uid===myId);
+
+let wq=Promise.resolve();
+function write(patch){
+  if(readOnly) return Promise.reject({code:"read_only"});
+  const p = wq.then(()=>store.update(patch));
+  wq = p.catch(()=>{});
+  p.catch(onWriteErr);
+  return p;
+}
+function onWriteErr(e){
+  const code = e && e.code;
+  if(code==="invalid_argument" && mode==="online"){
+    readOnly=true;
+    notice("You can watch this duel but can't play in it yet. Ask the person who shared it to invite you as an Editor.");
+    panelKey=""; render();
+  } else if(code==="read_only"){ /* already explained */ }
+  else notice("That move didn't save. Check your internet connection and try again.");
+  casting=false; const b=$("castBtn"); if(b) b.disabled=false;
+  if(spell && spell.active) showKb(true);
+}
+function notice(t){ const n=$("notice"); n.textContent=t||""; n.hidden=!t; }
+
+async function startOnline(){
+  mode="online"; store=onlineDb.doc("games/duel"); myId=onlineId;
+  try{
+    const s=await store.get();
+    if(!s.exists && !readOnly) await store.set(freshDoc(null));
+  }catch(e){ if(e && e.code==="invalid_argument") readOnly=true; }
+  if(readOnly) notice("You can watch this duel but can't play in it yet. Ask the person who shared it to invite you as an Editor.");
+  subscribe();
+}
+async function startLocal(reason){
+  mode="local"; store=makeLocalStore(); myId="local"; readOnly=false;
+  await store.set(freshDoc("local"));
+  notice(reason==="choice" ? "" :
+    reason==="noid" ? "Sign in to Claude to play online. For now this is pass-the-phone mode: take turns on this device." :
+    "Online play isn't available here, so this is pass-the-phone mode: take turns on this device.");
+  subscribe();
+}
+function subscribe(){
+  if(unsub) unsub();
+  latest=null; seenLastId=undefined; panelKey="";
+  unsub = store.onSnapshot(s=>{ if(s.exists) onDoc(s.data()); },
+    ()=>notice("Lost the connection to the duel room. Reload the page to reconnect."));
+}
+function onDoc(d){
+  latest=d;
+  const lastId = d.last ? d.last.id : null;
+  if(seenLastId===undefined){ seenLastId=lastId; return render(); }
+  if(lastId && lastId!==seenLastId){
+    seenLastId=lastId; animating=true;
+    animate(d.last, ()=>{ animating=false; render(); });
+    return;
+  }
+  seenLastId=lastId;
+  if(!animating) render();
+}
+
+async function boot(){
+  renderConnecting();
+  const cl=window.claude;
+  if(!cl || typeof cl.use!=="function") return startLocal("file");
+  let db=null, user=null;
+  try{ [db,user]=await Promise.all([cl.use("db"), cl.use("user")]); }catch(e){}
+  if(!db) return startLocal("nodb");
+  const id = user ? await user.id() : null;
+  if(!id) return startLocal("noid");
+  onlineDb=db; onlineId=id;
+  if(user && (await user.can("data.write"))===false) readOnly=true;
+  startOnline();
+}
+function renderConnecting(){
+  $("setupCards").innerHTML=`<div class="pcard"><h2>Opening the duel room…</h2><p class="lvl-note">One moment.</p></div>`;
+  $("startRow").innerHTML="";
+}
+
+/* ---------- audio ---------- */
+let actx=null;
+function unlockAudio(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+document.addEventListener("pointerdown", unlockAudio, {once:true});
+function tone(freq,dur,type="sine",slide=0,vol=.18){
+  if(!actx) return;
+  try{
+    const o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime;
+    o.type=type; o.frequency.setValueAtTime(freq,t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(40,freq+slide),t+dur);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur);
+  }catch(e){}
+}
+const sfx = {
+  seal(){tone(520+Math.random()*200,.07,"square",0,.06)},
+  cast(){tone(300,.35,"sawtooth",600,.12);setTimeout(()=>tone(900,.3,"triangle",-500,.12),120)},
+  hit(){tone(120,.4,"square",-60,.2)},
+  fizzle(){tone(400,.5,"sawtooth",-330,.1)}
+};
+const canSpeak = "speechSynthesis" in window;
+function speak(text,rate=.8){
+  if(!canSpeak) return;
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=rate; u.lang="en-US"; speechSynthesis.speak(u);}catch(e){}
+}
+
+/* ---------- on-screen keyboard for phones (no swipe typing or autocorrect) ---------- */
+const TOUCH = matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+const kb=$("kb");
+let spell=null, casting=false, activeIdx=0;
+function buildKb(){
+  const rows=["qwertyuiop","asdfghjkl","⌫zxcvbnm↵"];
+  kb.innerHTML=rows.map(r=>`<div class="r">${[...r].map(ch=>
+    ch==="⌫"?`<button class="wide" data-k="back" aria-label="Delete">⌫</button>`:
+    ch==="↵"?`<button class="wide go" data-k="enter" id="kbEnter">Cast</button>`:
+    `<button data-k="${ch}">${ch}</button>`).join("")}</div>`).join("");
+  kb.addEventListener("pointerdown",e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    e.preventDefault();
+    if(!spell || !spell.active || casting) return;
+    const k=b.dataset.k, inp=$("answer"+activeIdx);
+    if(k==="enter") return submitField(activeIdx);
+    if(!inp) return;
+    if(k==="back") inp.value=inp.value.slice(0,-1);
+    else if(inp.value.length<20) inp.value+=k;
+    inp.dispatchEvent(new Event("input"));
+  });
+}
+if(TOUCH) buildKb();
+function showKb(on){ if(!TOUCH) return; kb.hidden=!on; document.body.classList.toggle("kb-on",on); }
+function setActive(k){
+  activeIdx=k;
+  document.querySelectorAll(".scroll input[id^=answer]").forEach(el=>el.classList.toggle("active",el.id==="answer"+k));
+  const btn=$("kbEnter");
+  if(btn) btn.textContent = $("answer"+(k+1)) ? "Next" : "Cast";
+}
+function submitField(k){
+  const nxt=$("answer"+(k+1));
+  if(nxt){ setActive(k+1); if(!TOUCH) nxt.focus(); speak(spell.items[k+1].w); }
+  else cast();
+}
+
+/* ---------- drawing ---------- */
+function cycleHTML(){
+  return `<span class="t">Element chart: each one beats the next</span>` +
+    EL_KEYS.map(k=>`<span class="el" style="--c:${ELEMENTS[k].c}">${ELEMENTS[k].label}</span><span class="arrow">beats</span>`).join("") +
+    `<span class="el" style="--c:${ELEMENTS.fire.c}">Fire</span>`;
+}
+$("cycleSetup").innerHTML = cycleHTML();
+$("cycleGame").innerHTML = cycleHTML();
+
+function ninjaSVG(color){
+  return `<svg viewBox="0 0 100 130" aria-hidden="true">
+    <ellipse cx="50" cy="126" rx="30" ry="4" fill="rgba(0,0,0,.4)"/>
+    <path d="M30 70 Q50 60 70 70 L74 112 Q50 118 26 112Z" fill="#232a52"/>
+    <path d="M30 78 L70 78 L70 86 L30 86Z" fill="${color}"/>
+    <rect x="34" y="110" width="12" height="16" rx="3" fill="#1a1f3d"/>
+    <rect x="54" y="110" width="12" height="16" rx="3" fill="#1a1f3d"/>
+    <path d="M68 74 L88 60 L92 66 L72 80Z" fill="#232a52"/>
+    <circle cx="90" cy="62" r="6" fill="#f2c9a0"/>
+    <circle cx="50" cy="42" r="24" fill="#232a52"/>
+    <rect x="28" y="36" width="44" height="12" rx="6" fill="#f2c9a0"/>
+    <circle cx="44" cy="42" r="3" fill="#0c1024"/><circle cx="58" cy="42" r="3" fill="#0c1024"/>
+    <path d="M26 30 Q50 20 74 30 L74 36 Q50 28 26 36Z" fill="${color}"/>
+    <path d="M27 32 L10 22 L14 34Z" fill="${color}"/>
+  </svg>`;
+}
+
+function render(){
+  const d=latest; if(!d) return;
+  $("setupView").hidden = d.status!=="lobby";
+  $("gameView").hidden = d.status!=="playing";
+  $("winView").hidden = d.status!=="over";
+  if(d.status!=="playing"){ spell=null; showKb(false); setShield(null); }
+  if(d.status==="lobby") renderLobby(d);
+  else if(d.status==="playing") renderGame(d);
+  else renderWin(d);
+}
+
+/* ---------- lobby ---------- */
+function renderLobby(d){
+  panelKey="";
+  const online = mode==="online";
+  $("setupCards").innerHTML=[0,1].map(i=>{
+    const s=d.seats[i], me=mine(i), canChange = !readOnly && (online ? me : true);
+    let seatLine="";
+    if(online){
+      if(me) seatLine=`<span class="you">This is you</span> ${readOnly?"":`<button class="ghost small" data-leave="${i}">Leave seat</button>`}`;
+      else if(s.uid) seatLine=`<span class="taken">Taken by the other player</span>`;
+      else seatLine = readOnly ? `<span class="taken">Open seat</span>` : `<button data-take="${i}">Play as ${esc(seatName(d,i))}</button>`;
+    }
+    return `<div class="pcard">
+      <h2 style="color:${s.color}">${esc(seatName(d,i))}</h2>
+      ${online?`<div class="seatline">${seatLine}</div>`:""}
+      ${i===1?`<p class="lvl-note">Name changes with the level: Beginner is Ant, Medium is Drew, Hard is Ri.</p>`:""}
+      <div class="lab">Headband color<div class="chips" data-k="color" data-i="${i}">
+        ${BAND_COLORS.map(c=>`<button class="swatch" style="--c:${c}" data-v="${c}" aria-label="Color ${c}" aria-pressed="${s.color===c}" ${canChange?"":"disabled"}></button>`).join("")}
+      </div></div>
+      <div class="lab">Level<div class="chips" data-k="lvl" data-i="${i}">
+        ${Object.entries(LEVELS).map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${s.lvl===k}" ${canChange?"":"disabled"}>${l.label}</button>`).join("")}
+      </div><p class="lvl-note">${LEVELS[s.lvl].note}</p></div>
+    </div>`;
+  }).join("");
+  $("setupCards").querySelectorAll(".chips").forEach(g=>g.addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b || b.disabled) return;
+    write({seats:{[g.dataset.i]:{[g.dataset.k]:b.dataset.v}}});
+  }));
+  $("setupCards").querySelectorAll("[data-take]").forEach(b=>b.onclick=()=>write({seats:{[b.dataset.take]:{uid:myId}}}));
+  $("setupCards").querySelectorAll("[data-leave]").forEach(b=>b.onclick=()=>write({seats:{[b.dataset.leave]:{uid:null}}}));
+
+  const both = d.seats["0"].uid && d.seats["1"].uid;
+  const seated = mine(0) || mine(1);
+  let msg;
+  if(!online) msg="Take turns on this screen. Turn the sound on so you can hear each word.";
+  else if(readOnly) msg="You're watching. The duel starts when both players are seated.";
+  else if(!seated) msg="Pick your ninja to join.";
+  else if(!both) msg="Waiting for the other player. Send them the link so they can open it and pick the open seat.";
+  else msg="Both ninjas are ready. Either player can start.";
+  $("startRow").innerHTML = `
+    <button id="startBtn" ${(both && (seated||!online) && !readOnly)?"":"disabled"}>Begin the duel</button>
+    <span class="hint">${msg}</span>
+    ${online ? `<button class="ghost" id="localBtn">Play on one device instead</button>`
+             : (onlineDb ? `<button class="ghost" id="onlineBtn">Back to online duel</button>` : "")}`;
+  $("startBtn").onclick=()=>{ unlockAudio(); write(freshMatch()); };
+  if($("localBtn")) $("localBtn").onclick=()=>startLocal("choice");
+  if($("onlineBtn")) $("onlineBtn").onclick=()=>{ notice(""); startOnline(); };
+}
+
+/* ---------- game ---------- */
+function setShield(target, el){
+  document.querySelectorAll(".shield").forEach(s=>s.remove());
+  if(target==null || !el) return;
+  const s=document.createElement("div"); s.className="shield";
+  s.style.setProperty("--sc",ELEMENTS[el].c);
+  s.innerHTML=`<span>${ELEMENTS[el].label} shield</span>`;
+  $("n"+target).appendChild(s);
+}
+function drawArena(d){
+  [0,1].forEach(i=>{
+    const s=d.seats[i], n=$("n"+i);
+    if(n.dataset.color!==s.color){ n.innerHTML=ninjaSVG(s.color); n.dataset.color=s.color; }
+    n.style.setProperty("--c",s.color);
+    n.classList.toggle("turn", d.turn===i && d.status==="playing");
+    const h=$("hp"+i); h.style.setProperty("--c",s.color);
+    const youTag = mode==="online" && mine(i) && !mine(1-i) ? " (you)" : "";
+    h.querySelector(".name").textContent=seatName(d,i)+youTag;
+    h.querySelector("i").style.width=(d.hp[i]/MAX_HP*100)+"%";
+    h.querySelector("small").textContent=d.hp[i]+" / "+MAX_HP+" chakra";
+  });
+  const sh = d.phase==="spelling" && d.cur ? d.cur.shield : null;
+  setShield(sh ? 1-d.turn : null, sh);
+  $("cycleGame").hidden = !sh;
+}
+
+function resultHTML(L,d){
+  const nm=esc(seatName(d,L.by));
+  const shield=L.shield, picked=L.picked;
+  const elNote = shield && picked ? (picked===counterOf(shield)
+      ? ` ${ELEMENTS[picked].label} beats ${ELEMENTS[shield].label}, so it was super effective!`
+      : ` ${ELEMENTS[picked].label} doesn't beat ${ELEMENTS[shield].label}. ${ELEMENTS[counterOf(shield)].label} would have.`) : "";
+  let msg;
+  if(L.outcome==="hit") msg=`<span class="ok">Direct hit!</span> ${nm} did ${L.dmg} damage.${elNote}${L.peeked?" (Half power after peeking.)":""}`;
+  else if(L.outcome==="backfire") msg=`<span class="no">Backfire!</span> ${nm} spelled it perfectly, but ${ELEMENTS[picked].label} can't break a ${ELEMENTS[shield].label} shield. ${nm} lost ${L.self} chakra. ${ELEMENTS[counterOf(shield)].label} was the right pick.`;
+  else msg=`<span class="no">The jutsu fizzled.</span> ${nm} wrote ${L.guesses.map(g=>"“"+esc(g)+"”").join(" and ")}. ${L.wrong.length>1?"The right spellings are:":"The right spelling is:"}`;
+  return `<p class="jutsu">Last turn · ${esc(L.move)}</p>
+    <p class="result">${msg}</p>
+    ${L.outcome==="fizzle"?L.wrong.map(w=>`<p class="correct">${esc(w)}</p>`).join("")+`<div class="row"><button class="ghost" data-say="${esc(L.wrong.join(". "))}">🔊 Hear it</button></div>`:""}
+    <hr class="cut">`;
+}
+function logLine(d){
+  const L=d.last; if(!L) return "";
+  return `Last turn: ${seatName(d,L.by)} · ${L.words.join(" + ")} · ${L.outcome==="hit"?"hit for "+L.dmg:L.outcome==="backfire"?"backfired, -"+L.self:"fizzled"}`;
+}
+
+let confirmRestart=false;
+function renderCtl(d){
+  const ctl=$("gameCtl");
+  const canAct = !readOnly && (mode==="local" || mine(0) || mine(1));
+  if(!canAct){ ctl.innerHTML=""; return; }
+  if(confirmRestart){
+    ctl.innerHTML=`<span class="hint">Start over with full chakra for both ninjas?</span>
+      <button id="restartYes">Yes, restart</button>
+      <button class="ghost" id="restartLobby">Change levels</button>
+      <button class="ghost" id="restartNo">Keep playing</button>`;
+    $("restartYes").onclick=()=>{ confirmRestart=false; spell=null; casting=false; showKb(false); write(freshMatch()); };
+    $("restartLobby").onclick=()=>{ confirmRestart=false; spell=null; showKb(false); write({status:"lobby"}); };
+    $("restartNo").onclick=()=>{ confirmRestart=false; renderCtl(latest); };
+  } else {
+    ctl.innerHTML=`<button class="ghost" id="restartBtn">↺ Restart duel</button>`;
+    $("restartBtn").onclick=()=>{ confirmRestart=true; renderCtl(latest); };
+  }
+}
+function renderGame(d){
+  drawArena(d);
+  renderCtl(d);
+  $("log").textContent=logLine(d);
+  const i=d.turn, foe=1-i, me=mine(i), online=mode==="online";
+  const key=[d.phase,i,d.cur&&d.cur.id,d.last&&d.last.id,me,readOnly,d.seats["1"].lvl].join("|");
+  if(key===panelKey) return;
+  panelKey=key;
+  const panel=$("panel");
+  const lastBlock = d.last ? resultHTML(d.last,d) : "";
+  const p=d.seats[i], name=esc(seatName(d,i)), foeName=esc(seatName(d,foe));
+
+  if(d.phase==="ready"){
+    spell=null; showKb(false);
+    if(me && !readOnly){
+      panel.innerHTML = lastBlock + `
+        <p class="jutsu">${LEVELS[p.lvl].label} level</p>
+        <p class="who">${online?"Your turn, ":""}${name}${online?"":"'s turn"}</p>
+        <p class="sentence">${online ? "Press Ready to hear your word." : `${foeName}, look away! ${name}, press Ready to hear your word.`}</p>
+        <div class="row"><button id="readyBtn">Ready</button></div>`;
+      $("readyBtn").onclick=()=>{ unlockAudio(); beginTurn(); };
+    } else {
+      panel.innerHTML = lastBlock + `
+        <p class="who">${name}'s turn</p>
+        <p class="sentence">Waiting for ${name} to press Ready…</p>`;
+    }
+  } else if(d.phase==="spelling" && d.cur){
+    if(me && !readOnly) showSpelling(d);
+    else {
+      spell=null; showKb(false);
+      const sh=d.cur.shield;
+      panel.innerHTML = `
+        <p class="jutsu">${LEVELS[p.lvl].label} level${d.cur.items.length>1?" · double jutsu":""}</p>
+        <p class="who">${name} is charging a jutsu…</p>
+        <p class="sentence">${d.cur.items.length>1?`${name} has to spell two words this time.`:`${name} is spelling a word.`}
+        ${sh?` Your <span style="color:${ELEMENTS[sh].c};text-shadow:0 1px 0 #2b2216">${ELEMENTS[sh].label}</span> shield is up.`:""}</p>`;
+    }
+  }
+  panel.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>speak(b.dataset.say));
+}
+
+/* word picking: avoid repeats on this device until the list runs out */
+const used = {beginner:new Set(), medium:new Set(), hard:new Set()};
+function pickWord(lvl, avoid){
+  let pool=parsed[lvl].filter(x=>!used[lvl].has(x.w) && !avoid.includes(x.w));
+  if(!pool.length){ used[lvl].clear(); pool=parsed[lvl].filter(x=>!avoid.includes(x.w)); }
+  const it=pool[Math.random()*pool.length|0]; used[lvl].add(it.w); return {w:it.w,s:it.s};
+}
+function beginTurn(){
+  const d=latest, i=d.turn, lvl=d.seats[i].lvl;
+  const count = (lvl==="hard" && Math.random()<DOUBLE_CHANCE) ? 2 : 1;
+  const items=[]; for(let k=0;k<count;k++) items.push(pickWord(lvl, items.map(x=>x.w)));
+  const shield = lvl==="beginner" ? null : EL_KEYS[Math.random()*EL_KEYS.length|0];
+  $("readyBtn").disabled=true;
+  speak(items[0].w);
+  write({phase:"spelling", cur:{id:rid(), items, shield}}).catch(()=>{ const b=$("readyBtn"); if(b) b.disabled=false; });
+}
+
+function wordBlock(item,idx,total){
+  const blanked=esc(item.s).replace(new RegExp("\\b"+item.w+"\\b","i"),"<b>&nbsp;</b>");
+  return `<div class="wordbox">
+    ${total>1?`<p class="jutsu">Word ${idx+1} of ${total}</p>`:""}
+    <p class="sentence">${blanked}</p>
+    <div class="seals" id="seals${idx}" aria-hidden="true"></div>
+    <div class="row">
+      <input type="text" id="answer${idx}" ${TOUCH?'readonly inputmode="none"':""} autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Spelling for word ${idx+1}">
+    </div>
+    <div class="row">
+      <button class="ghost" data-hear="${idx}">🔊 Hear word</button>
+      <button class="ghost" data-sent="${idx}">Hear sentence</button>
+      <button class="ghost" data-peek="${idx}">Peek (half power)</button>
+    </div>
+    <div id="peekOut${idx}"></div>
+  </div>`;
+}
+
+function showSpelling(d){
+  const i=d.turn, foe=1-i, p=d.seats[i], lvl=p.lvl, {items,shield}=d.cur;
+  if(!spell || spell.id!==d.cur.id) spell={id:d.cur.id, items, shield, picked:null, peeked:false, active:true};
+  spell.active=true; casting=false;
+  const foeName=esc(seatName(d,foe));
+  const picker = shield ? `
+    <div class="wordbox">
+      <p class="picktitle">${foeName} has a <span style="color:${ELEMENTS[shield].c};text-shadow:0 1px 0 #2b2216">${ELEMENTS[shield].label}</span> shield up. Pick your element:</p>
+      <div class="chips" id="elPick">
+        ${EL_KEYS.map(k=>`<button class="chip" style="--c:${ELEMENTS[k].c}" data-v="${k}" aria-pressed="${spell.picked===k}">${ELEMENTS[k].label}</button>`).join("")}
+      </div>
+      <p class="needs">${lvl==="medium"
+        ? `Right element = ${BONUS}× damage. Wrong element still works, just weaker.`
+        : `Wrong element = your jutsu backfires and you lose ${BACKFIRE} chakra.`}</p>
+    </div>` : "";
+  $("panel").innerHTML=`
+    <p class="jutsu">${LEVELS[lvl].label} · ${items.length>1?"Double jutsu! Spell both words":"Spell the word"}</p>
+    <p class="who">${esc(seatName(d,i))}, charge your jutsu</p>
+    ${picker}
+    ${items.map((it,k)=>wordBlock(it,k,items.length)).join("")}
+    <div class="row"><button id="castBtn">Cast jutsu</button></div>
+    ${canSpeak?"":`<p class="hint">This browser can't speak words aloud, so use Peek.</p>`}`;
+
+  if(shield){
+    const g=$("elPick");
+    g.addEventListener("click",e=>{
+      const b=e.target.closest(".chip"); if(!b) return;
+      spell.picked=b.dataset.v;
+      g.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));
+      tone(660,.08,"triangle",0,.08);
+    });
+  }
+  items.forEach((it,k)=>{
+    const inp=$("answer"+k);
+    inp.addEventListener("input",()=>{
+      const s=$("seals"+k);
+      const letters=inp.value.replace(/\s/g,"");
+      if(letters.length>s.children.length) sfx.seal();
+      const col = spell.picked ? ELEMENTS[spell.picked].c : p.color;
+      s.innerHTML=[...letters].map(ch=>`<span class="seal" style="background:${col};color:#0c1024">${esc(ch.toUpperCase())}</span>`).join("");
+    });
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter") submitField(k); });
+    inp.addEventListener("focus",()=>setActive(k));
+    inp.addEventListener("click",()=>setActive(k));
+    inp.addEventListener("paste",e=>e.preventDefault());
+  });
+  const panel=$("panel");
+  panel.querySelectorAll("[data-hear]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.hear].w));
+  panel.querySelectorAll("[data-sent]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.sent].s,.9));
+  panel.querySelectorAll("[data-peek]").forEach(b=>b.onclick=()=>{
+    const k=+b.dataset.peek; spell.peeked=true; b.disabled=true;
+    const out=$("peekOut"+k);
+    out.innerHTML=`<p class="peeked">${esc(items[k].w)}</p>`;
+    setTimeout(()=>{out.innerHTML=`<p class="hint">The word vanished. Now spell it from memory.</p>`},1600);
+    setActive(k); if(!TOUCH) $("answer"+k).focus();
+  });
+  $("castBtn").onclick=cast;
+  setActive(0); showKb(true);
+  if(shield) document.querySelector("#elPick .chip").focus();
+  else if(!TOUCH) $("answer0").focus();
+}
+
+function cast(){
+  if(casting || !spell) return;
+  const d=latest, {items,shield,picked,peeked}=spell;
+  if(shield && !picked){
+    const n=document.querySelector(".needs"); n.textContent="Pick an element first!"; n.style.color="#b3202f";
+    n.scrollIntoView({block:"center",behavior:"smooth"}); return;
+  }
+  const guesses=items.map((_,k)=>$("answer"+k).value.trim());
+  const empty=guesses.findIndex(g=>!g);
+  if(empty>-1){ setActive(empty); if(!TOUCH) $("answer"+empty).focus(); return; }
+  casting=true; $("castBtn").disabled=true; showKb(false);
+
+  const i=d.turn, foe=1-i, lvl=d.seats[i].lvl;
+  const stats=clone(d.stats), st=stats[i];
+  const wrong=items.filter((it,k)=>guesses[k].toLowerCase()!==it.w.toLowerCase()).map(x=>x.w);
+  const rightEl = shield ? picked===counterOf(shield) : true;
+  const castEl = picked || EL_KEYS[Math.random()*EL_KEYS.length|0];
+  const move = ELEMENTS[castEl].moves[Math.random()*3|0];
+  let outcome, dmg=0, self=0;
+  if(wrong.length){ outcome="fizzle"; st.fizzles++; st.missed.push(...wrong); }
+  else if(lvl==="hard" && !rightEl){ outcome="backfire"; self=BACKFIRE; st.backfires++; }
+  else {
+    outcome="hit"; st.hits++;
+    dmg = items.reduce((s,it)=>s+10+it.w.length*2,0);
+    if(shield && rightEl){ dmg=Math.round(dmg*BONUS); st.bonus++; }
+    if(shield && !rightEl) dmg=Math.round(dmg*.7);
+    if(peeked) dmg=Math.ceil(dmg/2);
+  }
+  const hp={"0":d.hp["0"],"1":d.hp["1"]};
+  hp[foe]=Math.max(0,hp[foe]-dmg); hp[i]=Math.max(0,hp[i]-self);
+  const over = hp[foe]===0 || hp[i]===0;
+  write({
+    hp, stats, turn:foe, phase:"ready", cur:null,
+    status: over ? "over" : "playing",
+    winner: over ? (hp[foe]===0 ? i : foe) : null,
+    last:{id:rid(), by:i, outcome, move, color:ELEMENTS[castEl].c, dmg, self,
+          words:items.map(x=>x.w), guesses, wrong, picked:picked||null, shield:shield||null, peeked}
+  });
+}
+
+function animate(L,done){
+  const fx=$("fx"), c=L.color, i=L.by;
+  if($("gameView").hidden){ return done(); }
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const banner=t=>{const b=document.createElement("div");b.className="banner";b.style.color=c;b.textContent=t;fx.appendChild(b);setTimeout(()=>b.remove(),1050)};
+  const shake=n=>{const el=$("n"+n);el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")};
+  sfx.cast(); banner(L.move);
+  const orb=document.createElement("div"); orb.className="orb"; orb.style.setProperty("--c",c);
+  const from=i===0?24:67, to=i===0?72:20, mid=(from+to)/2;
+  orb.style.left=from+"%"; fx.appendChild(orb);
+  let frames, dur=700;
+  if(L.outcome==="hit") frames=[{left:from+"%",transform:"scale(.6)"},{left:to+"%",transform:"scale(1.3)"}];
+  else if(L.outcome==="fizzle"){ frames=[{left:from+"%",transform:"scale(.6)",opacity:1},{left:mid+"%",transform:"scale(1.6)",opacity:0,filter:"grayscale(1) blur(6px)"}]; dur=800; }
+  else { frames=[{left:from+"%",transform:"scale(.6)"},{left:(to-6*(i===0?1:-1))+"%",transform:"scale(1.2)",offset:.55},{left:from+"%",transform:"scale(1.4)"}]; dur=1100; }
+  if(!reduce) orb.animate(frames,{duration:dur,easing:"ease-in-out",fill:"forwards"});
+  setTimeout(()=>{
+    orb.remove();
+    if(L.outcome==="hit"){ sfx.hit(); shake(1-i); banner("-"+L.dmg); }
+    else if(L.outcome==="fizzle"){ sfx.fizzle(); banner("FIZZLE…"); }
+    else { sfx.hit(); shake(i); banner("BACKFIRE -"+L.self); }
+    setTimeout(done,700);
+  }, reduce?200:dur);
+}
+
+function renderWin(d){
+  panelKey="";
+  const w=d.winner, v=$("winView");
+  const canAct = !readOnly && (mode==="local" || mine(0) || mine(1));
+  const L=d.last;
+  v.innerHTML=`
+    <h2 style="color:${d.seats[w].color}">${esc(seatName(d,w))} wins the duel!</h2>
+    ${L?`<p class="tag">Final move: ${esc(seatName(d,L.by))}'s ${esc(L.move)}${L.outcome==="backfire"?" backfired":L.outcome==="hit"?` for ${L.dmg} damage`:" fizzled"}.</p>`:""}
+    <div class="stats" style="margin-top:16px">
+      ${[0,1].map(i=>{const s=d.stats[i], p=d.seats[i];return `<div class="stat">
+        <div style="font-weight:900;color:${p.color}">${esc(seatName(d,i))} · ${LEVELS[p.lvl].label}</div>
+        <div><b>${s.hits}</b> landed · <b>${s.fizzles}</b> fizzled${p.lvl!=="beginner"?` · <b>${s.bonus}</b> super effective`:""}${p.lvl==="hard"?` · <b>${s.backfires}</b> backfired`:""}</div>
+        ${s.missed.length?`<div class="hint" style="margin-top:6px">Words to practice:</div><ul class="missed">${s.missed.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>`:`<div class="hint" style="margin-top:6px">No misspellings. Perfect!</div>`}
+      </div>`}).join("")}
+    </div>
+    <div class="start-row" style="margin-top:16px">
+      ${canAct?`<button id="rematch">Rematch</button><button class="ghost" id="changeSetup">Change levels</button>`:`<span class="hint">Waiting for a rematch…</span>`}
+    </div>`;
+  if(canAct){
+    $("rematch").onclick=()=>write(freshMatch());
+    $("changeSetup").onclick=()=>write({status:"lobby"});
+  }
+}
+
+/* ---------- share ---------- */
+const GAME_LINK = location.href.split("#")[0];
+$("shareLink").value = GAME_LINK;
+$("smsLink").href = "sms:?&body=" + encodeURIComponent("Let's duel! Spell Jutsu Duel: " + GAME_LINK);
+$("shareBtn").onclick = () => {
+  const p=$("sharePanel"); p.hidden=!p.hidden;
+  $("shareBtn").setAttribute("aria-expanded", String(!p.hidden));
+};
+$("copyLink").onclick = () => {
+  const inp=$("shareLink"), msg=$("copyMsg");
+  const fallback = () => { inp.focus(); inp.select(); msg.textContent="Link selected. Copy it, then paste it into a text."; };
+  try{
+    navigator.clipboard.writeText(GAME_LINK).then(
+      () => { $("copyLink").textContent="Copied!"; msg.textContent="Now paste it into a text to send it."; setTimeout(()=>$("copyLink").textContent="Copy link",2000); },
+      fallback);
+  }catch(e){ fallback(); }
+};
+
+boot();
+</script>
+
+</body></html>
