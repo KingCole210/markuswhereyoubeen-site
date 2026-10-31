@@ -139,6 +139,7 @@ canvas#bg{position:absolute;inset:0;width:100%;height:100%}
       <a class="app" href="https://www.youtube.com/@MarkusWhereYouBeen" target="_blank" rel="noopener"><span class="ic" style="background:linear-gradient(150deg,#3b4048,#1c1f24)"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3" fill="none" stroke="#f3efe6" stroke-width="1.8"/><path d="M10 9.5v5l4.5-2.5z" fill="#ff7a3d"/></svg></span><span>YouTube</span></a>
       <a class="app" href="https://www.tiktok.com/@markuswhereyoubeen" target="_blank" rel="noopener"><span class="ic" style="background:linear-gradient(150deg,#3b4048,#1c1f24)"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5" fill="none" stroke="#f3efe6" stroke-width="1.8"/><path d="M10.5 9.5v5l4-2.5z" fill="#5fc2b8"/></svg></span><span>TikTok</span></a>
       <a class="app" href="https://www.instagram.com/markuswhereyoubeen/" target="_blank" rel="noopener"><span class="ic" style="background:linear-gradient(150deg,#3b4048,#1c1f24)"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="#f3efe6" stroke-width="1.8"/><path d="m5 17 5-5 3 3 2-2 4 4" fill="none" stroke="#ff7a3d" stroke-width="1.8" stroke-linejoin="round"/><circle cx="16" cy="9" r="1.5" fill="#d9b25f"/></svg></span><span>Instagram</span></a>
+      <button class="app" data-open="recs"><span class="ic" style="background:linear-gradient(150deg,#5fc2b8,#2a7d75)"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="#0b1f1d"/></svg></span><span>Recs</span></button>
     </div>
     <nav class="dock" aria-label="Dock">
       <button class="app" data-open="games" aria-label="Games"><span class="ic" style="background:#1c1f24"><svg viewBox="0 0 24 24"><path d="M5 19 12 4l7 15-7-4z" fill="#ff7a3d"/></svg></span><span>Games</span></button>
@@ -169,6 +170,9 @@ const APPS={
   <table class="score"><thead><tr><th></th><th>Visited</th><th>A week</th><th>A month</th></tr></thead>
   <tbody><tr><td>Markus</td><td id="m1"></td><td id="m2"></td><td id="m3"></td></tr><tr><td>You</td><td id="y1"></td><td id="y2"></td><td id="y3"></td></tr></tbody></table>
   <button class="reset" id="greset">Clear my map</button>`],
+ recs:["Recs",`<p>Places and gear I actually recommend, picked up along the way.</p>
+  <div class="seg" id="recseg"><button data-rec="places" aria-pressed="true">Places</button><button data-rec="gear" aria-pressed="false">Travel gear</button></div>
+  <div id="reclist"></div>`],
  games:["Games",`<p>Just some things I've been working on in my free time.</p>
   <div class="row"><span class="meta">Playable · browser</span><b>Ninja Reborn</b><p>Turn-based ninja RPG with roguelike runs and multiplayer. First release.</p><div class="chips"><span class="chip">Turn-based</span><span class="chip">Roguelike</span><span class="chip">Co-op</span></div></div>
   <div class="row"><span class="meta">Mockup phase · Unreal</span><b>The Crawl <span class="ph">(working title)</span></b><p>First-person dungeon crawler. 25 crawlers drop in, 18 floors, 3 lives, a guide named Mitchall who hates the show. Painterly 3D.</p><div class="chips"><span class="chip">Floors 1–3</span><span class="chip">4-player</span><span class="chip">Controller</span></div></div>`],
@@ -186,7 +190,7 @@ $('#unlock').onclick=unlock;
 let y0=null;lock.addEventListener('pointerdown',e=>{y0=e.clientY});
 lock.addEventListener('pointermove',e=>{if(y0!==null&&y0-e.clientY>0)lock.style.transform=`translateY(${-(y0-e.clientY)}px)`});
 lock.addEventListener('pointerup',e=>{const dy=y0-e.clientY;lock.style.transform='';y0=null;if(dy>60)unlock()});
-document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const [t,h]=APPS[b.dataset.open];$('#stitle').textContent=t;$('#sbody').innerHTML=h;sheet.classList.add('on');$('#close').focus();if(b.dataset.open==='tracker')drawGlobe()});
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const [t,h]=APPS[b.dataset.open];$('#stitle').textContent=t;$('#sbody').innerHTML=h;sheet.classList.add('on');$('#close').focus();if(b.dataset.open==='tracker')drawGlobe();if(b.dataset.open==='recs')renderRecs('places')});
 $('#close').onclick=()=>sheet.classList.remove('on');
 sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove('on')};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')sheet.classList.remove('on')});
@@ -202,6 +206,16 @@ function draw(t){const g=cx.createRadialGradient(W*.5,H*.95,0,W*.5,H*.95,H);g.ad
   cx.fillStyle=hot?`rgba(255,122,61,${.5+Z*.5})`:`rgba(95,194,184,${Z*.45})`;cx.beginPath();cx.arc(ox+X*R,oy-y*R,hot?2.2:1.1,0,7);cx.fill()}
  if(!still)requestAnimationFrame(draw)}
 size();addEventListener('resize',size);requestAnimationFrame(draw);
+// recommendations: add items as {name, where, note}
+const RECS={
+ places:[],
+ gear:[]
+};
+function renderRecs(kind){const box=document.getElementById('reclist');if(!box)return;const list=RECS[kind];
+ box.innerHTML=list.length?list.map(r=>`<div class="row"><span class="meta">${r.where||''}</span><b>${r.name}</b>${r.note?`<p>${r.note}</p>`:''}</div>`).join('')
+ :`<div class="row"><span class="meta">Coming soon</span><b>${kind==='places'?'First picks drop after Japan':'My packing list is on the way'}</b></div>`}
+$('#sbody').addEventListener('click',e=>{const b=e.target.closest('[data-rec]');if(!b)return;
+ document.querySelectorAll('#recseg button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderRecs(b.dataset.rec)});
 // passport globe. Levels: 1 visited, 2 a week, 3 a month
 const MINE={'840':3,'484':3,'004':3,'634':2,'372':1,'826':1,'414':1}; // USA, Mexico, Afghanistan (month); Qatar (week); Ireland, UK, Kuwait (visited)
 const LEVEL=['Not yet','Visited','A week','A month'], COLORS=['#262b31','#5fc2b8','#d9b25f','#ff7a3d'];
