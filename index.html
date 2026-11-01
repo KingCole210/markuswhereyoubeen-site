@@ -109,7 +109,7 @@ canvas#bg{position:absolute;inset:0;width:100%;height:100%}
 
 <div class="stage"><div class="phone" id="phone">
   <canvas id="bg"></canvas>
-  <div class="status"><span id="sclock" style="pointer-events:auto;cursor:default;-webkit-tap-highlight-color:transparent;user-select:none">8:06</span></div>
+  <div class="status"><span id="sclock">8:06</span></div>
 
   <section class="screen" id="lock" aria-label="Lock screen" hidden>
     <div class="date" id="date">Sunday, October 25</div>
@@ -216,8 +216,13 @@ function renderRecs(kind){const box=document.getElementById('reclist');if(!box)r
  :`<div class="row"><span class="meta">Coming soon</span><b>${kind==='places'?'First picks drop after Japan':'My packing list is on the way'}</b></div>`}
 $('#sbody').addEventListener('click',e=>{const b=e.target.closest('[data-rec]');if(!b)return;
  document.querySelectorAll('#recseg button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderRecs(b.dataset.rec)});
-// secret: five quick taps on the clock open the arcade
-(()=>{let n=0,t=0;$('#sclock').addEventListener('click',()=>{const now=Date.now();n=now-t<600?n+1:1;t=now;if(n>=5){n=0;location.href='arcade/'}})})();
+// secret: nine taps on the country count (one per tail) open the arcade
+(()=>{const big=$('.widget .big');let n=0,timer;big.style.cssText+=';-webkit-tap-highlight-color:transparent;user-select:none;transition:text-shadow .2s,color .2s';
+ big.addEventListener('click',e=>{e.stopPropagation();n++;clearTimeout(timer);
+  const k=n/9;big.style.color=n>2?`color-mix(in srgb,#ff7a3d ${Math.round(k*100)}%,#f3efe6)`:'';
+  big.style.textShadow=n>2?`0 0 ${Math.round(k*28)}px rgba(255,122,61,${(.3+k*.6).toFixed(2)})`:'';
+  if(n>=9){location.href='arcade/';return}
+  timer=setTimeout(()=>{n=0;big.style.color='';big.style.textShadow=''},1500)})})();
 // passport globe. Levels: 1 visited, 2 a week, 3 a month
 const MINE={'840':3,'484':3,'004':3,'634':2,'372':1,'826':1,'414':1}; // USA, Mexico, Afghanistan (month); Qatar (week); Ireland, UK, Kuwait (visited)
 const LEVEL=['Not yet','Visited','A week','A month'], COLORS=['#262b31','#5fc2b8','#d9b25f','#ff7a3d'];
