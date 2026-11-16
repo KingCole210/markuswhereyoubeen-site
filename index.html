@@ -134,17 +134,12 @@ canvas#bg{position:absolute;inset:0;width:100%;height:100%}
       <span class="tiers"><span><i style="background:#5fc2b8"></i><b id="w1">3</b> visited</span><span><i style="background:#d9b25f"></i><b id="w2">3</b> a week</span><span><i style="background:#ff7a3d"></i><b id="w3">3</b> a month</span></span>
     </button>
     <div class="grid">
-      <button class="app" data-open="games"><span class="ic" style="background:linear-gradient(150deg,#ff9a5c,#c8461a)"><svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 4 4v2a3 3 0 0 1-5 2l-2-2H9l-2 2a3 3 0 0 1-5-2v-2a4 4 0 0 1 4-4z" fill="#1a0d06"/><circle cx="16.5" cy="11" r="1.2" fill="#ff9a5c"/><path d="M6 11h3M7.5 9.5v3" stroke="#ff9a5c" stroke-width="1.6"/></svg></span><span>Games</span></button>
       <button class="app" data-open="about"><span class="ic" style="background:linear-gradient(150deg,#f3efe6,#bdb6a6)"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="#0b0d10"/><path d="M4 21c1-5 15-5 16 0" fill="#0b0d10"/></svg></span><span>About</span></button>
       <a class="app" href="https://www.youtube.com/@MarkusWhereYouBeen" target="_blank" rel="noopener"><span class="ic" style="background:linear-gradient(150deg,#3b4048,#1c1f24)"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3" fill="none" stroke="#f3efe6" stroke-width="1.8"/><path d="M10 9.5v5l4.5-2.5z" fill="#ff7a3d"/></svg></span><span>YouTube</span></a>
       <a class="app" href="https://www.tiktok.com/@markuswhereyoubeen" target="_blank" rel="noopener"><span class="ic" style="background:linear-gradient(150deg,#3b4048,#1c1f24)"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5" fill="none" stroke="#f3efe6" stroke-width="1.8"/><path d="M10.5 9.5v5l4-2.5z" fill="#5fc2b8"/></svg></span><span>TikTok</span></a>
       <a class="app" href="https://www.instagram.com/markuswhereyoubeen/" target="_blank" rel="noopener"><span class="ic" style="background:linear-gradient(150deg,#3b4048,#1c1f24)"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="#f3efe6" stroke-width="1.8"/><path d="m5 17 5-5 3 3 2-2 4 4" fill="none" stroke="#ff7a3d" stroke-width="1.8" stroke-linejoin="round"/><circle cx="16" cy="9" r="1.5" fill="#d9b25f"/></svg></span><span>Instagram</span></a>
       <button class="app" data-open="recs"><span class="ic" style="background:linear-gradient(150deg,#5fc2b8,#2a7d75)"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="#0b1f1d"/></svg></span><span>Recs</span></button>
     </div>
-    <nav class="dock" aria-label="Dock">
-      <button class="app" data-open="games" aria-label="Games"><span class="ic" style="background:#1c1f24"><svg viewBox="0 0 24 24"><path d="M5 19 12 4l7 15-7-4z" fill="#ff7a3d"/></svg></span><span>Games</span></button>
-      <button class="app" data-open="about" aria-label="Notes"><span class="ic" style="background:linear-gradient(180deg,#d9b25f 0 28%,#1c1f24 28%)"><svg viewBox="0 0 24 24"><path d="M6 14h12M6 18h8" stroke="#f3efe6" stroke-width="1.6"/></svg></span><span>Notes</span></button>
-    </nav>
   </section>
 
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="stitle">
@@ -173,9 +168,6 @@ const APPS={
  recs:["Recs",`<p>Places and gear I actually recommend, picked up along the way.</p>
   <div class="seg" id="recseg"><button data-rec="places" aria-pressed="true">Places</button><button data-rec="gear" aria-pressed="false">Travel gear</button></div>
   <div id="reclist"></div>`],
- games:["Games",`<p>Just some things I've been working on in my free time.</p>
-  <div class="row"><span class="meta">Playable · browser</span><b>Ninja Reborn</b><p>Turn-based ninja RPG with roguelike runs and multiplayer. First release.</p><div class="chips"><span class="chip">Turn-based</span><span class="chip">Roguelike</span><span class="chip">Co-op</span></div></div>
-  <div class="row"><span class="meta">Mockup phase · Unreal</span><b>The Crawl <span class="ph">(working title)</span></b><p>First-person dungeon crawler. 25 crawlers drop in, 18 floors, 3 lives, a guide named Mitchall who hates the show. Painterly 3D.</p><div class="chips"><span class="chip">Floors 1–3</span><span class="chip">4-player</span><span class="chip">Controller</span></div></div>`],
  about:["About",`<p>My name is Markus, and my goal is to spend 30 days in every country.</p>`],
  watch:["YouTube",`<p>Long-form: building things with AI, plus the every-country challenge.</p><div class="copy"><code>youtube.com/@MarkusWhereYouBeen</code><button data-copy>Copy</button></div>`],
  clips:["TikTok",`<p>Travel clips from the road.</p><div class="copy"><code>tiktok.com/@markuswhereyoubeen</code><button data-copy>Copy</button></div>`],
@@ -216,13 +208,6 @@ function renderRecs(kind){const box=document.getElementById('reclist');if(!box)r
  :`<div class="row"><span class="meta">Coming soon</span><b>${kind==='places'?'First picks drop after Japan':'My packing list is on the way'}</b></div>`}
 $('#sbody').addEventListener('click',e=>{const b=e.target.closest('[data-rec]');if(!b)return;
  document.querySelectorAll('#recseg button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderRecs(b.dataset.rec)});
-// secret: nine taps on the country count (one per tail) open the arcade
-(()=>{const big=$('.widget .big');let n=0,timer;big.style.cssText+=';-webkit-tap-highlight-color:transparent;user-select:none;transition:text-shadow .2s,color .2s';
- big.addEventListener('click',e=>{e.stopPropagation();n++;clearTimeout(timer);
-  const k=n/9;big.style.color=n>2?`color-mix(in srgb,#ff7a3d ${Math.round(k*100)}%,#f3efe6)`:'';
-  big.style.textShadow=n>2?`0 0 ${Math.round(k*28)}px rgba(255,122,61,${(.3+k*.6).toFixed(2)})`:'';
-  if(n>=9){location.href='arcade/';return}
-  timer=setTimeout(()=>{n=0;big.style.color='';big.style.textShadow=''},1500)})})();
 // passport globe. Levels: 1 visited, 2 a week, 3 a month
 const MINE={'840':3,'484':3,'004':3,'634':2,'372':1,'826':1,'414':1}; // USA, Mexico, Afghanistan (month); Qatar (week); Ireland, UK, Kuwait (visited)
 const LEVEL=['Not yet','Visited','A week','A month'], COLORS=['#262b31','#5fc2b8','#d9b25f','#ff7a3d'];
